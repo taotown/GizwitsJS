@@ -1,0 +1,2 @@
+# GizwitsJS
+Gizwits Javascript SDK
