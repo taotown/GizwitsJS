@@ -24,15 +24,34 @@ var P0_CMD_REPORT_SUBDEVICE_LIST = 0x5C; //子设备列表变更通知(中控)
  * Gizwits JavaScript SDK对象构造函数
  * 
  * @class
- * @param {String} apiHost       指定JS SDK要连接的OpenAPI域名
- * @param {String} gizwitsOpenId 指定机智云openId,用于登录机智云
- * @param {String} gizwitsAppId  指定机智云应用Id,为开发者在机智云申请的AppID
+ * @param {Object} params 指定参数对象({ apiHost: "xxx", gizwitsOpenId: "yyy", gizwitsAppId: "zzz" })
  */
-function GizwitsJS(apiHost, gizwitsOpenId, gizwitsAppId) {
+function GizwitsJS(params) {
+    if (!params) {
+        console.log("Invaild params " + params);
+        return;
+    }
+
+    if (!params.apiHost) {
+        console.log("Invaild params.apiHost " + params.apiHost);
+        return;
+    }
+
+    if (!params.gizwitsOpenId) {
+        console.log("Invaild params.gizwitsOpenId " + params.gizwitsOpenId);
+        return;
+    }
+
+    if (!params.gizwitsAppId) {
+        console.log("Invaild params.gizwitsAppId " + params.gizwitsAppId);
+        return;
+    }
+
     //外部回调
     this.onError = undefined;
     this.onBindDevice = undefined;
     this.onReceiveData = undefined;
+    this.onGetDeviceList = undefined;
     this.onDiscoverDevices = undefined;
     this.onSubscribeDevice = undefined;
     this.onUpdateSubDevices = undefined;
@@ -44,12 +63,12 @@ function GizwitsJS(apiHost, gizwitsOpenId, gizwitsAppId) {
     this._subDevices = {};
     this._connections = {};
     this._boundDevices = {};
-    this._apiHost = apiHost;
     this._userID = undefined;
-    this._appID = gizwitsAppId;
     this._userToken = undefined;
-    this._openID = gizwitsOpenId;
     this._heartbeatInterval = 55;
+    this._apiHost = params.apiHost;
+    this._appID = params.gizwitsAppId;
+    this._openID = params.gizwitsOpenId;
 }
 
 /**
@@ -61,7 +80,7 @@ function GizwitsJS(apiHost, gizwitsOpenId, gizwitsAppId) {
  * @param {Function} callback 指定回调对象
  */
 function Connection(wsInfo, dataType, callback) {
-    this._subscribedDids = [];
+    this._subscribedDids = {};
     this._dataType = dataType;
     this._loginFailedCount = 0;
     this._websocket = undefined;
@@ -81,21 +100,35 @@ GizwitsJS.prototype.discoverDevices = function() {
     this._getUserToken();
 }
 
+GizwitsJS.prototype.getDeviceList = function() {
+    this._onDiscoverDevices(this.onGetDeviceList);
+}
+
 /**
  * 订阅指定设备标识码对应的设备
  * 
- * @param {String} did 指定设备标识码
+ * @param {Object} params 指定参数对象({did: "xxx"})
  * @see 成功回调接口 onSubscribeDevice
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.subscribeDevice = function(did) {
+GizwitsJS.prototype.subscribeDevice = function(params) {
+    if (!params) {
+        this._sendError("Invaild params, params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError("Invaild params, params.did " + params.did);
+        return;
+    }
+
     if (!this._boundDevices) {
         this._sendError("Please call 'discoverDevices()' firstly.");
         return;
     }
 
     //找到指定设备标识码对应的设备对象
-    var device = this._boundDevices[did];
+    var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError("Device is not bound.");
         return;
@@ -109,38 +142,47 @@ GizwitsJS.prototype.subscribeDevice = function(did) {
 /**
  * 读取指定设备标识码对应的设备的状态(对于定义了变长数据点的设备还可以指定关心的数据点名称读取指定的数据点状态)
  * 
- * @param {String}          did   指定设备标识码
- * @param {?Array.<String>} attrs 指定关心的数据点名称(null或undefined则表示不指定,定义了定长数据点的设备指定该字段无意义)
+ * @param {Object} params 指定参数对象({ did: "xxx", attrs: ["yyy"] })
  * @see 成功回调接口 onReceiveData
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.read = function(did, attrs) {
+GizwitsJS.prototype.read = function(params) {
+    if (!params) {
+        this._sendError("Invaild params, params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError("Invaild params, params.did " + params.did);
+        return;
+    }
+
     if (!this._boundDevices) {
         this._sendError("Please call 'discoverDevices()' firstly.");
         return;
     }
 
     //找到指定设备标识码对应的设备对象
-    var device = this._boundDevices[did];
+    var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError("Device is not bound.");
         return;
     }
 
     //往Websocket连接发送数据点数据读请求
-    if (attrs) {
+    if (params.attrs) {
         this._sendJson(device, P0_TYPE_ATTRS_V4, {
             cmd: "c2s_read",
             data: {
-                did: did,
-                names: attrs
+                did: params.did,
+                names: params.attrs
             }
         });
     } else {
         this._sendJson(device, P0_TYPE_ATTRS_V4, {
             cmd: "c2s_read",
             data: {
-                did: did
+                did: params.did
             }
         });
     }
@@ -149,43 +191,51 @@ GizwitsJS.prototype.read = function(did, attrs) {
 /**
  * 向指定设备标识码对应的设备发送指定数据点数据或自定义数据
  * 
- * @param {Sring}           did   指定设备标识码
- * @param {?Array.<Object>} attrs 指定数据点数据,key为数据点名称,value为数据点值(null或undefined则表示不发送数据点数据)
- * @param {?Array.<Number>} raw   指定自定义数据,传透传的P0数据数组(null或undefined则表示不发送自定义数据)
+ * @param {Object} params 指定参数对象({ did: "xxx", attrs: ["yyy"], raw: [Number] })
  * @see 成功回调接口 onReceiveData
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.write = function(did, attrs, raw) {
+GizwitsJS.prototype.write = function(params) {
+    if (!params) {
+        this._sendError("Invaild params, params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError("Invaild params, params.did " + params.did);
+        return;
+    }
+
     if (!this._boundDevices) {
         this._sendError("Please call 'discoverDevices()' firstly.");
         return;
     }
 
     //找到指定设备标识码对应的设备对象
-    var device = this._boundDevices[did];
+    var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError("Device is not bound.");
         return;
     }
 
-    if (attrs) {
+    if (params.attrs) {
         //往Websocket连接发送数据点数据
         this._sendJson(device, P0_TYPE_ATTRS_V4, {
             cmd: "c2s_write",
             data: {
-                did: did,
-                attrs: attrs
+                did: params.did,
+                attrs: params.attrs
             }
         });
     }
 
-    if (raw) {
+    if (params.raw) {
         //往Websocket连接发送自定义数据
         this._sendJson(device, P0_TYPE_CUSTOM, {
             cmd: "c2s_raw",
             data: {
-                did: did,
-                raw: raw
+                did: params.did,
+                raw: params.raw
             }
         });
     }
@@ -194,18 +244,28 @@ GizwitsJS.prototype.write = function(did, attrs, raw) {
 /**
  * 更新指定设备标识码对应的中控的子设备列表
  * 
- * @param {String} did  指定设备标识码
+ * @param {Object} params 指定参数对象({ did: "xxx" })
  * @see 成功回调接口 onUpdateSubDevices
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.updateSubDevices = function(did) {
+GizwitsJS.prototype.updateSubDevices = function(params) {
+    if (!params) {
+        this._sendError("Invaild params, params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError("Invaild params, params.did " + params.did);
+        return;
+    }
+
     if (!typeof this._boundDevices) {
         this._sendError("Please call 'discoverDevices()' firstly.");
         return;
     }
 
     //找到指定设备标识码对应的设备对象
-    var device = this._boundDevices[did];
+    var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError("Device is not bound.");
         return;
@@ -229,7 +289,7 @@ GizwitsJS.prototype.updateSubDevices = function(did) {
     this._sendJson(device, P0_TYPE_CUSTOM, {
         cmd: "c2s_raw",
         data: {
-            did: did,
+            did: params.did,
             raw: data
         }
     });
@@ -238,19 +298,28 @@ GizwitsJS.prototype.updateSubDevices = function(did) {
 /**
  * 向指定设备标识码对应的中控发送添加子设备请求(并可指定待筛选的子设备信息)
  * 
- * @param {String}          did        指定设备标识码
- * @param {?Array.<Object>} subDevices 指定待筛选的子设备信息(null或undefined则表示不指定)
+ * @param {Object} params 指定参数对象({ did: "xxx", subDevices: [{ mac: "yyy", productKey: "zzz" }]})
  * @see 成功回调接口 onUpdateSubDevices
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.addSubDevice = function(did, subDevices) {
+GizwitsJS.prototype.addSubDevice = function(params) {
+    if (!params) {
+        this._sendError("Invaild params, params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError("Invaild params, params.did " + params.did);
+        return;
+    }
+
     if (!this._boundDevices) {
         this._sendError("Please call 'discoverDevices()' firstly.");
         return;
     }
 
     //找到指定设备标识码对应的设备对象
-    var device = this._boundDevices[did];
+    var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError("Device is not bound.");
         return;
@@ -266,14 +335,14 @@ GizwitsJS.prototype.addSubDevice = function(did, subDevices) {
     remainDataView.setInt32(index, this._gloabSN++); //指定SN
     index += 4;
     remainData[index++] = 0x56; //指定添加子设备Action
-    var subDeviceNum = subDevices ? subDevices.length : 0;
+    var subDeviceNum = params.subDevices ? params.subDevices.length : 0;
     remainDataView.setInt16(index, subDeviceNum); //指定设备识别码个数
     index += 2;
 
     //指定设备识别码
     var encoder = new TextEncoder();
     for (var i = 0; i < subDeviceNum; i++) {
-        var mac = subDevices[i].mac;
+        var mac = params.subDevices[i].mac;
         if (mac) {
             remainData[index++] = mac.length; //设备识别码长度
             remainData.set(encoder.encode(mac), index); //设备识别码
@@ -288,7 +357,7 @@ GizwitsJS.prototype.addSubDevice = function(did, subDevices) {
     this._sendJson(device, P0_TYPE_CUSTOM, {
         cmd: "c2s_raw",
         data: {
-            did: did,
+            did: params.did,
             raw: data
         }
     });
@@ -297,14 +366,23 @@ GizwitsJS.prototype.addSubDevice = function(did, subDevices) {
 /**
  * 向指定设备标识码对应的中控发送删除指定子设备信息对应的子设备请求
  * 
- * @param  {String}           did        指定设备标识码
- * @param  {?Array.<Object>}} subDevices 指定待删除的子设备信息
+ * @param {Object} params 指定参数对象({ did: "xxx", subDevices: [{ did: "yyy" }]})
  * @see 成功回调接口 onUpdateSubDevices
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.deleteSubDevice = function(did, subDevices) {
-    if (!subDevices) {
-        this._sendError("Please special valid subDevices.");
+GizwitsJS.prototype.deleteSubDevice = function(params) {
+    if (!params) {
+        this._sendError("Invaild params, params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError("Invaild params, params.did " + params.did);
+        return;
+    }
+
+    if (!params.subDevices) {
+        this._sendError("Please special valid params.subDevices.");
         return;
     }
 
@@ -314,22 +392,22 @@ GizwitsJS.prototype.deleteSubDevice = function(did, subDevices) {
     }
 
     //找到指定设备标识码对应的设备对象
-    var device = this._boundDevices[did];
+    var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError("Device is not bound.");
         return;
     }
 
     //找到指定设备标识码对应的设备对象下的子设备列表
-    var subDevicesCache = this._subDevices[did];
+    var subDevicesCache = this._subDevices[params.did];
     if (!subDevicesCache) {
         this._sendError("Device do not have subDevices be cached.");
         return;
     }
 
     //挨个删除子设备
-    for (var i = 0; i < subDevices.length; i++) {
-        var subDeviceCache = subDevicesCache[subDevices[i].did];
+    for (var i = 0; i < params.subDevices.length; i++) {
+        var subDeviceCache = subDevicesCache[params.subDevices[i].params.did];
         if (subDeviceCache) {
             //匹配到子设备
             //由于长度字段依赖后续字段长度,故先组装长度字段后续字段
@@ -352,7 +430,7 @@ GizwitsJS.prototype.deleteSubDevice = function(did, subDevices) {
             this._sendJson(device, P0_TYPE_CUSTOM, {
                 cmd: "c2s_raw",
                 data: {
-                    did: did,
+                    did: params.did,
                     raw: data
                 }
             });
@@ -363,26 +441,30 @@ GizwitsJS.prototype.deleteSubDevice = function(did, subDevices) {
 /**
  * MAC与ProductKey绑定设备(如果是微信开发者,能够通过微信完成设备绑定的,不需要调用此接口)
  *
- * @param  {Object} device   指定设备信息(包含MAC与ProductKey)
- * @param  {Object} bindInfo 指定绑定信息(包含product_secret或device_bind_url)
+ * @param {Object} params 指定参数对象({ device: { mac: "xxx", productKey: "yyy"}, bindInfo: { product_secret: "zzz", device_bind_url: "www" }})
  * @see 成功回调接口 onBindDevice
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.bindDevice = function(device, bindInfo) {
-    if (!device) {
-        this._sendError("Please special valid device.");
+GizwitsJS.prototype.bindDevice = function(params) {
+    if (!params) {
+        this._sendError("Invaild params, params " + params);
         return;
     }
 
-    if (!bindInfo) {
-        this._sendError("Please special valid bindInfo.");
+    if (!params.device) {
+        this._sendError("Invaild params, params.device " + params.device);
         return;
     }
 
-    if (bindInfo.product_secret) {
-        this._bindDeviceByMAC(device.mac, device.productKey, bindInfo.product_secret);
-    } else if (bindInfo.device_bind_url) {
-        this._bindDeviceCustom(device.mac, device.productKey, bindInfo.device_bind_url);
+    if (!params.bindInfo) {
+        this._sendError("Invaild params, params.bindInfo " + params.bindInfo);
+        return;
+    }
+
+    if (params.bindInfo.product_secret) {
+        this._bindDeviceByMAC(params.device.mac, params.device.productKey, params.bindInfo.product_secret);
+    } else if (params.bindInfo.device_bind_url) {
+        this._bindDeviceCustom(params.device.mac, params.device.productKey, params.bindInfo.device_bind_url);
     } else {
         this._sendError("Please special valid product_secret or device_bind_url in bindInfo.");
     }
@@ -425,9 +507,9 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
                 };
 
                 if (gizJS.onBindDevice) {
-                    gizJS.onBindDevice({did: result.did});
+                    gizJS.onBindDevice({ did: result.did });
                 }
-                gizJS._onDiscoverDevices();
+                gizJS._onDiscoverDevices(this.onDiscoverDevices);
             } else {
                 gizJS._sendError("bindDevice response invaild result: " + JSON.stringify(result));
             }
@@ -478,7 +560,7 @@ GizwitsJS.prototype._getBoundDevices = function(limit, skip) {
             if (result.devices.length === limit) {
                 gizJS._getBoundDevices(limit, skip + limit);
             } else {
-                gizJS._onDiscoverDevices();
+                gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
             }
         })
         .fail(function(evt) {
@@ -631,12 +713,17 @@ Connection.prototype._onWSError = function(evt) {
 
 Connection.prototype._startPing = function() {
     conn = this;
-    var heartbeatInterval = conn._callbackObj._heartbeatInterval * 1000;
-    conn._heartbeatTimerID = window.setInterval(function() { conn._sendJson({ cmd: "ping" }) }, heartbeatInterval);
+    if (!conn._heartbeatTimerID) {
+        var heartbeatInterval = conn._callbackObj._heartbeatInterval * 1000;
+        conn._heartbeatTimerID = window.setInterval(function() { conn._sendJson({ cmd: "ping" }) }, heartbeatInterval);
+    }
 };
 
 Connection.prototype._stopPing = function() {
-    window.clearInterval(this._heartbeatTimerID);
+    if (this._heartbeatTimerID) {
+        window.clearInterval(this._heartbeatTimerID);
+        this._heartbeatTimerID = null;
+    }
 };
 
 Connection.prototype._sendJson = function(json) {
@@ -646,7 +733,8 @@ Connection.prototype._sendJson = function(json) {
         websocket.send(data);
         return true;
     } else {
-        console.log("[" + Date() + "]Send data error, websocket is not connected.");
+        console.log("[" + Date() + "]Send data [" + data + "] error, websocket is not connected.");
+        this._stopPing();
         return false;
     }
 };
@@ -682,33 +770,17 @@ Connection.prototype._tryLoginAgain = function() {
 };
 
 Connection.prototype._addSubscribeDid = function(did) {
-    var subscribedDids = this._subscribedDids;
-    var subFlag = false;
-    for (var i = 0; i < subscribedDids.length; i++) {
-        if (subscribedDids[i] === did) {
-            subFlag = true;
-            break;
-        }
-    }
-    if (!subFlag) {
-        subscribedDids[subscribedDids.length] = did;
-    }
+    this._subscribedDids[did] = did;
 };
 
 Connection.prototype._removeSubscribeDid = function(did) {
-    var subDids = this._subscribedDids;
-    for (var i = 0; i < subDids.length; i++) {
-        if (subDids[i] === did) {
-            subDids.splice(i, 1);
-            break;
-        }
-    }
+    delete this._subscribedDids[did];
 };
 
 Connection.prototype._subscribeDevices = function() {
     var reqData = [];
-    for (var i = this._subscribedDids.length - 1; i >= 0; i--) {
-        reqData.push({ did: this._subscribedDids[i] });
+    for (var key in this._subscribedDids) {
+        reqData.push({ did: this._subscribedDids[key] });
     }
     var json = {
         cmd: "subscribe_req",
@@ -717,15 +789,17 @@ Connection.prototype._subscribeDevices = function() {
     this._sendJson(json);
 };
 
-GizwitsJS.prototype._onDiscoverDevices = function() {
-    if (this.onDiscoverDevices) {
+GizwitsJS.prototype._onDiscoverDevices = function(callback) {
+    if (callback) {
         var i = 0;
         var devices = [];
 
         //先存入已绑定(子)设备
         for (var key in this._boundDevices) {
             var device = this._boundDevices[key];
-            var isSubscribe = this._subscribedDids ? !!this._subscribedDids[device.did] : false;
+            //找到设备传输自定义数据的Websocket连接
+            var conn = this._connections[this._getConntionsKey(device, P0_TYPE_CUSTOM)];
+            var isSubscribe = conn ? !!conn._subscribedDids[device.did] : false;
             devices[i++] = {
                 "is_bind": true,
                 "did": device.did,
@@ -744,14 +818,13 @@ GizwitsJS.prototype._onDiscoverDevices = function() {
             for (var subDidFromCloud in this._subDevices[key]) {
                 if (!this._boundDevices[subDidFromCloud]) {
                     var device = this._subDevices[key][subDidFromCloud];
-                    var isSubscribe = this._subscribedDids ? !!this._subscribedDids[device.did] : false;
                     devices[i++] = {
                         "is_bind": false,
                         "did": device.did,
                         "mac": device.mac,
                         "remark": device.remark,
                         "alias": device.dev_alias,
-                        "is_subscribe": isSubscribe,
+                        "is_subscribe": false,
                         "is_online": device.is_online,
                         "product_key": device.product_key,
                         "type": this._getDevTypeByStr(device.type)
@@ -760,7 +833,7 @@ GizwitsJS.prototype._onDiscoverDevices = function() {
             }
         }
 
-        this.onDiscoverDevices({devices: devices});
+        callback({ devices: devices });
     }
 }
 
