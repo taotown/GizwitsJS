@@ -372,19 +372,19 @@ GizwitsJS.prototype.addSubDevice = function(params) {
  * @see 成功回调接口 onUpdateSubDevices
  * @see 失败回调接口 onError
  */
-GizwitsJS.prototype.deleteSubDevice = function(params) {
+GizwitsJS.prototype.removeSubDevice = function(params) {
     if (!params) {
-        this._sendError("Call deleteSubDevice with invaild params " + params);
+        this._sendError("Call removeSubDevice with invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Call deleteSubDevice with invaild params.did " + params.did);
+        this._sendError("Call removeSubDevice with invaild params.did " + params.did);
         return;
     }
 
     if (!params.subDevices) {
-        this._sendError("Call deleteSubDevice with invaild params.subDevices " + params.subDevices);
+        this._sendError("Call removeSubDevice with invaild params.subDevices " + params.subDevices);
         return;
     }
 
@@ -409,7 +409,7 @@ GizwitsJS.prototype.deleteSubDevice = function(params) {
 
     //挨个删除子设备
     for (var i = 0; i < params.subDevices.length; i++) {
-        var subDeviceCache = subDevicesCache[params.subDevices[i].params.did];
+        var subDeviceCache = subDevicesCache[params.subDevices[i].did];
         if (subDeviceCache) {
             //匹配到子设备
             //由于长度字段依赖后续字段长度,故先组装长度字段后续字段
@@ -780,7 +780,7 @@ Connection.prototype._sendJson = function(json) {
         websocket.send(data);
         return true;
     } else {
-        console.log("[" + Date() + "]Send data [" + data + "] error, websocket is not connected.");
+        console.log("[" + Date() + "]Send data " + data + " error, websocket is not connected.");
         this._stopPing();
         return false;
     }

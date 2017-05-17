@@ -125,17 +125,16 @@
         showScreen("已对中控设备" + did + "发送添加子设备指令: subDevices=" + subDevices);
     }
 
-    function deleteSubDevice() {
-        var did = $('#deleteSubDeviceDid').val();
+    function removeSubDevice() {
+        var did = $('#removeSubDeviceDid').val();
         var subDevices = $('#subDevicesForDeleting').val();
         if (subDevices) {
-            gGizwitsJS.deleteSubDevice(did, JSON.parse(subDevices));
-            gGizwitsJS.deleteSubDevice({
+            gGizwitsJS.removeSubDevice({
                 did: did,
                 subDevices: JSON.parse(subDevices)
             });
         } else {
-            gGizwitsJS.deleteSubDevice({
+            gGizwitsJS.removeSubDevice({
                 did: did
             });
         }
@@ -225,7 +224,7 @@
         var device = gBoundDevices[did];
         if (device) {
             addSelectOption('#addSubDeviceDid', did, did);
-            addSelectOption('#deleteSubDeviceDid', did, did);
+            addSelectOption('#removeSubDeviceDid', did, did);
             addSelectOption('#updateSubdevicesDid', did, did);
         }
 
@@ -385,13 +384,13 @@
                 <p>（若添加上子设备，变化的子设备列表会在onUpdateSubDevices这个callback函数返回。）</p>
                 <h4>8. 选择已订阅中控设备及其子设备，删除一下子设备</h4>
                 <label style="display:inline-block;width: 90px">did:</label>
-                <select id="deleteSubDeviceDid" about="" style="width: 300px;"></select>
+                <select id="removeSubDeviceDid" about="" style="width: 300px;"></select>
                 <br/>
                 <label>subDevices:</label>
                 <br/>
                 <textarea rows="5" cols="90" id="subDevicesForDeleting" placeholder='填写子设备信息subDevices,例如[{"did":"xxx"},{"did":"yyy"},...],指定待删除的子设备'></textarea>
                 <br/>
-                <button id="deleteSubDevice" onclick="deleteSubDevice()">Do it!</button>
+                <button id="removeSubDevice" onclick="removeSubDevice()">Do it!</button>
                 <br/>
                 <p>（若删除掉子设备，变化的子设备列表会在onUpdateSubDevices这个callback函数返回。）</p>
                 <h4>9. 选择一个已存在的(子)设备，绑定一下(子)设备</h4>
