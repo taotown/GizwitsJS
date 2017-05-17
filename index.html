@@ -35,6 +35,7 @@
         });
 
         gGizwitsJS.onError = onError;
+        gGizwitsJS.onBindDevice = onBindDevice;
         gGizwitsJS.onReceiveData = onReceiveData;
         gGizwitsJS.onDiscoverDevices = onDiscoverDevices;
         gGizwitsJS.onSubscribeDevice = onSubscribeDevice;
@@ -176,15 +177,15 @@
             for (var i = deviceArray.length - 1; i >= 0; i--) {
                 var device = deviceArray[i];
                 showScreen("==================================================");
-                showScreen("已绑定设备:product_key=" + device.product_key);
-                showScreen("已绑定设备:did=" + device.did);
-                showScreen("已绑定设备:mac=" + device.mac);
-                showScreen("已绑定设备:is_subscribe=" + device.is_subscribe);
-                showScreen("已绑定设备:is_online=" + device.is_online);
-                showScreen("已绑定设备:is_bind=" + device.is_bind);
-                showScreen("已绑定设备:type=" + device.type);
-                showScreen("已绑定设备:dev_alias=" + device.dev_alias);
-                showScreen("已绑定设备:remark=" + device.remark);
+                showScreen("更新设备列表:product_key=" + device.product_key);
+                showScreen("更新设备列表:did=" + device.did);
+                showScreen("更新设备列表:mac=" + device.mac);
+                showScreen("更新设备列表:is_subscribe=" + device.is_subscribe);
+                showScreen("更新设备列表:is_online=" + device.is_online);
+                showScreen("更新设备列表:is_bind=" + device.is_bind);
+                showScreen("更新设备列表:type=" + device.type);
+                showScreen("更新设备列表:dev_alias=" + device.dev_alias);
+                showScreen("更新设备列表:remark=" + device.remark);
 
                 addSelectOption('#subscribeDeviceDid', device.did, device.did);
 
@@ -252,6 +253,10 @@
             str = str.substr(0, str.length - 1) + "]";
             showScreen(str);
         }
+    }
+
+    function onBindDevice(value) {
+        showScreen("绑定设备:" + value.did + "成功!");
     }
 
     function onError(value) {
@@ -401,7 +406,7 @@
                 <br/>
                 <button id="bindDevice" onclick="bindDevice()">Do it!</button>
                 <br/>
-                <p>（若(子)设备成功，变化的设备列表会在onDiscoverDevices这个callback函数返回。）</p>
+                <p>（若绑定(子)设备成功，会在onBindDevice这个callback函数返回。）</p>
             </td>
             <td align="left" valign="top" style="padding: 0 0 0 10px;">
                 <button id="clear" onclick="clearLog();">clear</button>

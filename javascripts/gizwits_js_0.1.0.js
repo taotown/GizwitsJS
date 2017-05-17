@@ -20,6 +20,8 @@ var P0_CMD_DELETE_SUBDEVICE_RESP = 0x59; //删除子设备(中控)
 var P0_CMD_GET_SUBDEVICE_LIST_RESP = 0x5B; //获取子设备列表应答(中控)
 var P0_CMD_REPORT_SUBDEVICE_LIST = 0x5C; //子设备列表变更通知(中控)
 
+var CHAR_SIZE = 8; //指定MD5加密支持编码. 8 - ASCII; 16 - Unicode
+
 /**
  * Gizwits JavaScript SDK对象构造函数
  * 
@@ -28,22 +30,22 @@ var P0_CMD_REPORT_SUBDEVICE_LIST = 0x5C; //子设备列表变更通知(中控)
  */
 function GizwitsJS(params) {
     if (!params) {
-        console.log("Invaild params " + params);
+        console.log("Call GizwitsJS with invaild params " + params);
         return;
     }
 
     if (!params.apiHost) {
-        console.log("Invaild params.apiHost " + params.apiHost);
+        console.log("Call GizwitsJS with invaild params.apiHost " + params.apiHost);
         return;
     }
 
     if (!params.gizwitsOpenId) {
-        console.log("Invaild params.gizwitsOpenId " + params.gizwitsOpenId);
+        console.log("Call GizwitsJS with invaild params.gizwitsOpenId " + params.gizwitsOpenId);
         return;
     }
 
     if (!params.gizwitsAppId) {
-        console.log("Invaild params.gizwitsAppId " + params.gizwitsAppId);
+        console.log("Call GizwitsJS with invaild params.gizwitsAppId " + params.gizwitsAppId);
         return;
     }
 
@@ -113,12 +115,12 @@ GizwitsJS.prototype.getDeviceList = function() {
  */
 GizwitsJS.prototype.subscribeDevice = function(params) {
     if (!params) {
-        this._sendError("Invaild params, params " + params);
+        this._sendError("Call subscribeDevice with invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Invaild params, params.did " + params.did);
+        this._sendError("Call subscribeDevice with invaild params.did " + params.did);
         return;
     }
 
@@ -148,12 +150,12 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
  */
 GizwitsJS.prototype.read = function(params) {
     if (!params) {
-        this._sendError("Invaild params, params " + params);
+        this._sendError("Call read with invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Invaild params, params.did " + params.did);
+        this._sendError("Call read with invaild params.did " + params.did);
         return;
     }
 
@@ -197,12 +199,12 @@ GizwitsJS.prototype.read = function(params) {
  */
 GizwitsJS.prototype.write = function(params) {
     if (!params) {
-        this._sendError("Invaild params, params " + params);
+        this._sendError("Call read with invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Invaild params, params.did " + params.did);
+        this._sendError("Call read with invaild params.did " + params.did);
         return;
     }
 
@@ -250,12 +252,12 @@ GizwitsJS.prototype.write = function(params) {
  */
 GizwitsJS.prototype.updateSubDevices = function(params) {
     if (!params) {
-        this._sendError("Invaild params, params " + params);
+        this._sendError("Call updateSubDevices with invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Invaild params, params.did " + params.did);
+        this._sendError("Call updateSubDevices with invaild params.did " + params.did);
         return;
     }
 
@@ -304,12 +306,12 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
  */
 GizwitsJS.prototype.addSubDevice = function(params) {
     if (!params) {
-        this._sendError("Invaild params, params " + params);
+        this._sendError("Call addSubDevice with invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Invaild params, params.did " + params.did);
+        this._sendError("Call addSubDevice with invaild params.did " + params.did);
         return;
     }
 
@@ -372,17 +374,17 @@ GizwitsJS.prototype.addSubDevice = function(params) {
  */
 GizwitsJS.prototype.deleteSubDevice = function(params) {
     if (!params) {
-        this._sendError("Invaild params, params " + params);
+        this._sendError("Call deleteSubDevice with invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Invaild params, params.did " + params.did);
+        this._sendError("Call deleteSubDevice with invaild params.did " + params.did);
         return;
     }
 
     if (!params.subDevices) {
-        this._sendError("Please special valid params.subDevices.");
+        this._sendError("Call deleteSubDevice with invaild params.subDevices " + params.subDevices);
         return;
     }
 
@@ -447,17 +449,17 @@ GizwitsJS.prototype.deleteSubDevice = function(params) {
  */
 GizwitsJS.prototype.bindDevice = function(params) {
     if (!params) {
-        this._sendError("Invaild params, params " + params);
+        this._sendError("Call bindDevice with invaild params " + params);
         return;
     }
 
     if (!params.device) {
-        this._sendError("Invaild params, params.device " + params.device);
+        this._sendError("Call bindDevice with invaild params.device " + params.device);
         return;
     }
 
     if (!params.bindInfo) {
-        this._sendError("Invaild params, params.bindInfo " + params.bindInfo);
+        this._sendError("Call bindDevice with invaild params.bindInfo " + params.bindInfo);
         return;
     }
 
@@ -466,7 +468,7 @@ GizwitsJS.prototype.bindDevice = function(params) {
     } else if (params.bindInfo.device_bind_url) {
         this._bindDeviceCustom(params.device.mac, params.device.productKey, params.bindInfo.device_bind_url);
     } else {
-        this._sendError("Please special valid product_secret or device_bind_url in bindInfo.");
+        this._sendError("Please special valid product_secret or device_bind_url in bindInfo when calling bindDevice.");
     }
 }
 
@@ -474,7 +476,46 @@ GizwitsJS.prototype.bindDevice = function(params) {
 // http functions
 //=========================================================
 GizwitsJS.prototype._bindDeviceByMAC = function(mac, productKey, productSecret) {
-    //TODO
+    var gizJS = this;
+    var timestamp = Date.now() / 1000 >> 0; //去当前时间戳
+    var signature = hexMD5(productSecret + timestamp); //将产品密钥跟时间戳拼接后计算MD5得到签名字符串
+    var url = "https://{0}/app/bind_mac".format(gizJS._apiHost);
+    var data = JSON.stringify({
+        mac: mac,
+        product_key: productKey
+    });
+
+    $.ajax(url, {
+            type: "POST",
+            contentType: "application/json",
+            headers: { 
+                "X-Gizwits-Application-Id": gizJS._appID,
+                "X-Gizwits-User-token": gizJS._userToken,
+                "X-Gizwits-Timestamp": timestamp,
+                "X-Gizwits-Signature": signature
+            },
+            dataType: "json",
+            data: data
+        })
+        .done(function(result) {
+            var online = false;
+            if ('online' === result.is_online) {
+                online = true;
+            }
+            if (result.did) {
+                gizJS._boundDevices[result.did] = result;
+
+                if (gizJS.onBindDevice) {
+                    gizJS.onBindDevice({ did: result.did });
+                }
+                gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
+            } else {
+                gizJS._sendError("bindDevice response invaild result: " + JSON.stringify(result));
+            }
+        })
+        .fail(function(evt) {
+            gizJS._sendError("bindDevice error: " + evt.responseText);
+        });
 }
 
 GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
@@ -484,6 +525,7 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
         mac: mac,
         product_key: product_key
     });
+
     $.ajax(customURL, {
             type: "POST",
             contentType: "application/json",
@@ -509,7 +551,7 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
                 if (gizJS.onBindDevice) {
                     gizJS.onBindDevice({ did: result.did });
                 }
-                gizJS._onDiscoverDevices(this.onDiscoverDevices);
+                gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
             } else {
                 gizJS._sendError("bindDevice response invaild result: " + JSON.stringify(result));
             }
@@ -522,17 +564,21 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
 GizwitsJS.prototype._getUserToken = function() {
     var gizJS = this;
     var url = "https://{0}/app/users".format(gizJS._apiHost);
+    var data = JSON.stringify({
+        phone_id: gizJS._openID,
+        lang: "en"
+    });
+
     $.ajax(url, {
             type: "POST",
             contentType: "application/json",
             headers: { "X-Gizwits-Application-Id": gizJS._appID },
             dataType: "json",
-            data: "{\"phone_id\":\"" + gizJS._openID + "\",\"lang\":\"en\"}"
+            data: data
         })
         .done(function(result) {
             gizJS._userID = result.uid;
             gizJS._userToken = result.token;
-            gizJS._boundDevices = {};
             gizJS._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
         })
         .fail(function(evt) {
@@ -552,6 +598,7 @@ GizwitsJS.prototype._getBoundDevices = function(limit, skip) {
             headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken }
         })
         .done(function(result) {
+            gizJS._boundDevices = {};
             for (var i = result.devices.length - 1; i >= 0; i--) {
                 var device = result.devices[i];
                 gizJS._boundDevices[device.did] = device;
@@ -912,13 +959,13 @@ GizwitsJS.prototype._getConntionsKey = function(device, dataType) {
 
 GizwitsJS.prototype._getMQTTLenArray = function(len) {
     var digitNum = 0;
-    var tmpDigit = Math.ceil(len); //去小数点
+    var tmpDigit = len;
     var MQTTLenArray = new Array();
 
     if (len <= 0) return MQTTLenArray;
 
     do {
-        //左移位运算符>>变相将浮点类型转为整型,效率高于Math.floor且不用区分正负
+        //左移位运算符>>变相将浮点类型转为整型,效率高于Math.ceil或Math.floor且不用区分正负
         if (tmpDigit / 0x80 >> 0) {
             MQTTLenArray[digitNum++] = tmpDigit % 0x80 | 0x80;
         } else {
@@ -1030,3 +1077,156 @@ String.prototype.format = function() {
             return args[i];
         });
 };
+
+//=========================================================
+// MD5 functions
+//=========================================================
+function hexMD5(s) {
+    return binl2hex(coreMD5(str2binl(s), s.length * CHAR_SIZE));
+}
+
+function coreMD5(x, len) {
+    x[len >> 5] |= 0x80 << ((len) % 32);
+    x[(((len + 64) >>> 9) << 4) + 14] = len;
+
+    var a = 1732584193;
+    var b = -271733879;
+    var c = -1732584194;
+    var d = 271733878;
+
+    for (var i = 0; i < x.length; i += 16) {
+        var olda = a;
+        var oldb = b;
+        var oldc = c;
+        var oldd = d;
+
+        a = md5FF(a, b, c, d, x[i + 0], 7, -680876936);
+        d = md5FF(d, a, b, c, x[i + 1], 12, -389564586);
+        c = md5FF(c, d, a, b, x[i + 2], 17, 606105819);
+        b = md5FF(b, c, d, a, x[i + 3], 22, -1044525330);
+        a = md5FF(a, b, c, d, x[i + 4], 7, -176418897);
+        d = md5FF(d, a, b, c, x[i + 5], 12, 1200080426);
+        c = md5FF(c, d, a, b, x[i + 6], 17, -1473231341);
+        b = md5FF(b, c, d, a, x[i + 7], 22, -45705983);
+        a = md5FF(a, b, c, d, x[i + 8], 7, 1770035416);
+        d = md5FF(d, a, b, c, x[i + 9], 12, -1958414417);
+        c = md5FF(c, d, a, b, x[i + 10], 17, -42063);
+        b = md5FF(b, c, d, a, x[i + 11], 22, -1990404162);
+        a = md5FF(a, b, c, d, x[i + 12], 7, 1804603682);
+        d = md5FF(d, a, b, c, x[i + 13], 12, -40341101);
+        c = md5FF(c, d, a, b, x[i + 14], 17, -1502002290);
+        b = md5FF(b, c, d, a, x[i + 15], 22, 1236535329);
+
+        a = md5GG(a, b, c, d, x[i + 1], 5, -165796510);
+        d = md5GG(d, a, b, c, x[i + 6], 9, -1069501632);
+        c = md5GG(c, d, a, b, x[i + 11], 14, 643717713);
+        b = md5GG(b, c, d, a, x[i + 0], 20, -373897302);
+        a = md5GG(a, b, c, d, x[i + 5], 5, -701558691);
+        d = md5GG(d, a, b, c, x[i + 10], 9, 38016083);
+        c = md5GG(c, d, a, b, x[i + 15], 14, -660478335);
+        b = md5GG(b, c, d, a, x[i + 4], 20, -405537848);
+        a = md5GG(a, b, c, d, x[i + 9], 5, 568446438);
+        d = md5GG(d, a, b, c, x[i + 14], 9, -1019803690);
+        c = md5GG(c, d, a, b, x[i + 3], 14, -187363961);
+        b = md5GG(b, c, d, a, x[i + 8], 20, 1163531501);
+        a = md5GG(a, b, c, d, x[i + 13], 5, -1444681467);
+        d = md5GG(d, a, b, c, x[i + 2], 9, -51403784);
+        c = md5GG(c, d, a, b, x[i + 7], 14, 1735328473);
+        b = md5GG(b, c, d, a, x[i + 12], 20, -1926607734);
+
+        a = md5HH(a, b, c, d, x[i + 5], 4, -378558);
+        d = md5HH(d, a, b, c, x[i + 8], 11, -2022574463);
+        c = md5HH(c, d, a, b, x[i + 11], 16, 1839030562);
+        b = md5HH(b, c, d, a, x[i + 14], 23, -35309556);
+        a = md5HH(a, b, c, d, x[i + 1], 4, -1530992060);
+        d = md5HH(d, a, b, c, x[i + 4], 11, 1272893353);
+        c = md5HH(c, d, a, b, x[i + 7], 16, -155497632);
+        b = md5HH(b, c, d, a, x[i + 10], 23, -1094730640);
+        a = md5HH(a, b, c, d, x[i + 13], 4, 681279174);
+        d = md5HH(d, a, b, c, x[i + 0], 11, -358537222);
+        c = md5HH(c, d, a, b, x[i + 3], 16, -722521979);
+        b = md5HH(b, c, d, a, x[i + 6], 23, 76029189);
+        a = md5HH(a, b, c, d, x[i + 9], 4, -640364487);
+        d = md5HH(d, a, b, c, x[i + 12], 11, -421815835);
+        c = md5HH(c, d, a, b, x[i + 15], 16, 530742520);
+        b = md5HH(b, c, d, a, x[i + 2], 23, -995338651);
+
+        a = md5II(a, b, c, d, x[i + 0], 6, -198630844);
+        d = md5II(d, a, b, c, x[i + 7], 10, 1126891415);
+        c = md5II(c, d, a, b, x[i + 14], 15, -1416354905);
+        b = md5II(b, c, d, a, x[i + 5], 21, -57434055);
+        a = md5II(a, b, c, d, x[i + 12], 6, 1700485571);
+        d = md5II(d, a, b, c, x[i + 3], 10, -1894986606);
+        c = md5II(c, d, a, b, x[i + 10], 15, -1051523);
+        b = md5II(b, c, d, a, x[i + 1], 21, -2054922799);
+        a = md5II(a, b, c, d, x[i + 8], 6, 1873313359);
+        d = md5II(d, a, b, c, x[i + 15], 10, -30611744);
+        c = md5II(c, d, a, b, x[i + 6], 15, -1560198380);
+        b = md5II(b, c, d, a, x[i + 13], 21, 1309151649);
+        a = md5II(a, b, c, d, x[i + 4], 6, -145523070);
+        d = md5II(d, a, b, c, x[i + 11], 10, -1120210379);
+        c = md5II(c, d, a, b, x[i + 2], 15, 718787259);
+        b = md5II(b, c, d, a, x[i + 9], 21, -343485551);
+
+        a = safeAdd(a, olda);
+        b = safeAdd(b, oldb);
+        c = safeAdd(c, oldc);
+        d = safeAdd(d, oldd);
+    }
+
+    return Array(a, b, c, d);
+}
+
+function md5CMN(q, a, b, x, s, t) {
+    return safeAdd(bitRol(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b);
+}
+
+function md5FF(a, b, c, d, x, s, t) {
+    return md5CMN((b & c) | ((~b) & d), a, b, x, s, t);
+}
+
+function md5GG(a, b, c, d, x, s, t) {
+    return md5CMN((b & d) | (c & (~d)), a, b, x, s, t);
+}
+
+function md5HH(a, b, c, d, x, s, t) {
+    return md5CMN(b ^ c ^ d, a, b, x, s, t);
+}
+
+function md5II(a, b, c, d, x, s, t) {
+    return md5CMN(c ^ (b | (~d)), a, b, x, s, t);
+}
+
+function safeAdd(x, y) {
+    var lsw = (x & 0xFFFF) + (y & 0xFFFF);
+    var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+
+    return (msw << 16) | (lsw & 0xFFFF);
+}
+
+function bitRol(num, cnt) {
+    return (num << cnt) | (num >>> (32 - cnt));
+}
+
+function str2binl(str) {
+    var bin = Array();
+    var mask = (1 << CHAR_SIZE) - 1;
+
+    for (var i = 0; i < str.length * CHAR_SIZE; i += CHAR_SIZE) {
+        bin[i >> 5] |= (str.charCodeAt(i / CHAR_SIZE) & mask) << (i % 32);
+    }
+
+    return bin;
+}
+
+function binl2hex(binarray) {
+    var str = "";
+    var hexTable = "0123456789abcdef";
+
+    for (var i = 0; i < binarray.length * 4; i++) {
+        str += hexTable.charAt((binarray[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) +
+            hexTable.charAt((binarray[i >> 2] >> ((i % 4) * 8)) & 0xF);
+    }
+
+    return str;
+}
