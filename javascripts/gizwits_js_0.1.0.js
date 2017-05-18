@@ -5,6 +5,7 @@
  */
 
 var LEN_DID = 22; //设备识别码长度
+var CHAR_SIZE = 8; //指定MD5加密支持编码. 8 - ASCII; 16 - Unicode
 var LEN_PRODUCT_KEY = 32; //产品标识码长度
 var P0_TYPE_CUSTOM = "custom"; //自定义P0
 var P0_TYPE_ATTRS_V4 = "attrs_v4"; //数据点协议P0
@@ -12,6 +13,9 @@ var PROTOCOL_VER = [0x00, 0x00, 0x00, 0x03]; //P0协议版本号
 var RETRY_WAIT_TIME = 5000; //用户重登/Websocket重连间隔(毫秒)
 var RETRY_SEND_TIME = 2000; //重连Websocket后重新下发指令的时间间隔(毫秒)
 var GET_BOUND_DEV_ONE_STEP_LIMIT = 20; //获取绑定设备列表单次请求设备数量
+var DEV_TYPE_NORMAL = "normal"; //普通设备类型
+var DEV_TYPE_CENTER_CONTROL = "center_control"; //中控设备类型
+var DEV_TYPE_SUB = "sub_dev"; //子设备类型
 
 var CMD_TRANS_BUSINESS_RESP = 0x94;
 var P0_CMD_REPORT_SUBDEVICE_STATUS = 0x10; //子设备上下线状态变更通知(中控)
@@ -20,7 +24,19 @@ var P0_CMD_DELETE_SUBDEVICE_RESP = 0x59; //删除子设备(中控)
 var P0_CMD_GET_SUBDEVICE_LIST_RESP = 0x5B; //获取子设备列表应答(中控)
 var P0_CMD_REPORT_SUBDEVICE_LIST = 0x5C; //子设备列表变更通知(中控)
 
-var CHAR_SIZE = 8; //指定MD5加密支持编码. 8 - ASCII; 16 - Unicode
+//错误码枚举
+var ERROR_CODE = {
+    GIZ_SDK_PARAM_INVALID: 8006,
+    GIZ_SDK_DEVICE_DID_INVALID: 8024,
+    GIZ_SDK_DEVICE_NOT_CENTERCONTROL: 8028,
+    GIZ_SDK_BIND_DEVICE_FAILED: 8039,
+    GIZ_SDK_HTTP_REQUEST_FAILED: 8099,
+
+    GIZ_SDK_WEB_SOCKET_CLOSED: 8900,
+    GIZ_SDK_SUBSCRIBE_FAILED: 8901,
+    GIZ_SDK_WEB_SOCKET_INVALID: 8902,
+    GIZ_SDK_WEB_SOCKET_ERROR: 8903
+}
 
 /**
  * Gizwits JavaScript SDK对象构造函数
@@ -50,8 +66,8 @@ function GizwitsJS(params) {
     }
 
     //外部回调
-    this.onError = undefined;
     this.onBindDevice = undefined;
+    this.onEventNotify = undefined;
     this.onReceiveData = undefined;
     this.onGetDeviceList = undefined;
     this.onDiscoverDevices = undefined;
@@ -95,13 +111,17 @@ function Connection(wsInfo, dataType, callback) {
 /**
  * 获取设备列表(回调合并后的设备列表(包括未绑定的子设备))
  * 
- * @see 成功回调接口 onDiscoverDevices
- * @see 失败回调接口 onError
+ * @see 回调接口 onDiscoverDevices(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.discoverDevices = function() {
     this._getUserToken();
 }
 
+/**
+ * 读取缓存设备列表(回调合并后的设备列表(包括未绑定的子设备))
+ * 
+ * @see 回调接口 onGetDeviceList(ret)
+ */
 GizwitsJS.prototype.getDeviceList = function() {
     this._onDiscoverDevices(this.onGetDeviceList);
 }
@@ -110,29 +130,36 @@ GizwitsJS.prototype.getDeviceList = function() {
  * 订阅指定设备标识码对应的设备
  * 
  * @param {Object} params 指定参数对象({did: "xxx"})
- * @see 成功回调接口 onSubscribeDevice
- * @see 失败回调接口 onError
+ * @see 回调接口 onSubscribeDevice(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.subscribeDevice = function(params) {
     if (!params) {
-        this._sendError("Call subscribeDevice with invaild params " + params);
+        this._sendError(this.onSubscribeDevice,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Call subscribeDevice with invaild params.did " + params.did);
+        this._sendError(this.onSubscribeDevice,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params.did " + params.did);
         return;
     }
 
     if (!this._boundDevices) {
-        this._sendError("Please call 'discoverDevices()' firstly.");
+        this._sendError(this.onSubscribeDevice,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + "Invaild did", params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象
     var device = this._boundDevices[params.did];
     if (!device) {
-        this._sendError("Device is not bound.");
+        this._sendError(this.onSubscribeDevice,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            "Invaild did", params.did);
         return;
     }
 
@@ -145,29 +172,38 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
  * 读取指定设备标识码对应的设备的状态(对于定义了变长数据点的设备还可以指定关心的数据点名称读取指定的数据点状态)
  * 
  * @param {Object} params 指定参数对象({ did: "xxx", attrs: ["yyy"] })
- * @see 成功回调接口 onReceiveData
- * @see 失败回调接口 onError
+ * @see 回调接口 onReceiveData(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.read = function(params) {
     if (!params) {
-        this._sendError("Call read with invaild params " + params);
+        this._sendError(this.onReceiveData,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Call read with invaild params.did " + params.did);
+        this._sendError(this.onReceiveData,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
     if (!this._boundDevices) {
-        this._sendError("Please call 'discoverDevices()' firstly.");
+        this._sendError(this.onReceiveData,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象
     var device = this._boundDevices[params.did];
     if (!device) {
-        this._sendError("Device is not bound.");
+        this._sendError(this.onReceiveData,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
@@ -194,29 +230,38 @@ GizwitsJS.prototype.read = function(params) {
  * 向指定设备标识码对应的设备发送指定数据点数据或自定义数据
  * 
  * @param {Object} params 指定参数对象({ did: "xxx", attrs: ["yyy"], raw: [Number] })
- * @see 成功回调接口 onReceiveData
- * @see 失败回调接口 onError
+ * @see 回调接口 onReceiveData(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.write = function(params) {
     if (!params) {
-        this._sendError("Call read with invaild params " + params);
+        this._sendError(this.onReceiveData,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Call read with invaild params.did " + params.did);
+        this._sendError(this.onReceiveData,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
     if (!this._boundDevices) {
-        this._sendError("Please call 'discoverDevices()' firstly.");
+        this._sendError(this.onReceiveData,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象
     var device = this._boundDevices[params.did];
     if (!device) {
-        this._sendError("Device is not bound.");
+        this._sendError(this.onReceiveData,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
@@ -247,29 +292,46 @@ GizwitsJS.prototype.write = function(params) {
  * 更新指定设备标识码对应的中控的子设备列表
  * 
  * @param {Object} params 指定参数对象({ did: "xxx" })
- * @see 成功回调接口 onUpdateSubDevices
- * @see 失败回调接口 onError
+ * @see 回调接口 onUpdateSubDevices(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.updateSubDevices = function(params) {
     if (!params) {
-        this._sendError("Call updateSubDevices with invaild params " + params);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Call updateSubDevices with invaild params.did " + params.did);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
     if (!typeof this._boundDevices) {
-        this._sendError("Please call 'discoverDevices()' firstly.");
+        this._sendError(this.onUpdateSubDevices,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象
     var device = this._boundDevices[params.did];
     if (!device) {
-        this._sendError("Device is not bound.");
+        this._sendError(this.onUpdateSubDevices,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
+        return;
+    }
+
+    if (device.type != DEV_TYPE_CENTER_CONTROL) {
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_CENTERCONTROL,
+            arguments.callee.name  + ": is not center control device",
+            params.did);
         return;
     }
 
@@ -301,29 +363,46 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
  * 向指定设备标识码对应的中控发送添加子设备请求(并可指定待筛选的子设备信息)
  * 
  * @param {Object} params 指定参数对象({ did: "xxx", subDevices: [{ mac: "yyy", productKey: "zzz" }]})
- * @see 成功回调接口 onUpdateSubDevices
- * @see 失败回调接口 onError
+ * @see 回调接口 onUpdateSubDevices(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.addSubDevice = function(params) {
     if (!params) {
-        this._sendError("Call addSubDevice with invaild params " + params);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Call addSubDevice with invaild params.did " + params.did);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
     if (!this._boundDevices) {
-        this._sendError("Please call 'discoverDevices()' firstly.");
+        this._sendError(this.onUpdateSubDevices,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象
     var device = this._boundDevices[params.did];
     if (!device) {
-        this._sendError("Device is not bound.");
+        this._sendError(this.onUpdateSubDevices,
+            GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
+        return;
+    }
+
+    if (device.type != DEV_TYPE_CENTER_CONTROL) {
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_CENTERCONTROL,
+            arguments.callee.name  + ": is not center control device",
+            params.did);
         return;
     }
 
@@ -369,41 +448,64 @@ GizwitsJS.prototype.addSubDevice = function(params) {
  * 向指定设备标识码对应的中控发送删除指定子设备信息对应的子设备请求
  * 
  * @param {Object} params 指定参数对象({ did: "xxx", subDevices: [{ did: "yyy" }]})
- * @see 成功回调接口 onUpdateSubDevices
- * @see 失败回调接口 onError
+ * @see 回调接口 onUpdateSubDevices(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.removeSubDevice = function(params) {
     if (!params) {
-        this._sendError("Call removeSubDevice with invaild params " + params);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
-        this._sendError("Call removeSubDevice with invaild params.did " + params.did);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
     if (!params.subDevices) {
-        this._sendError("Call removeSubDevice with invaild params.subDevices " + params.subDevices);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            arguments.callee.name + ": invaild params.subDevices " + params.subDevices,
+            params.did);
         return;
     }
 
     if (!this._boundDevices) {
-        this._sendError("Please call 'discoverDevices()' firstly.");
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象
     var device = this._boundDevices[params.did];
     if (!device) {
-        this._sendError("Device is not bound.");
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
+        return;
+    }
+
+    if (device.type != DEV_TYPE_CENTER_CONTROL) {
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_CENTERCONTROL,
+            arguments.callee.name  + ": is not center control device",
+            params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象下的子设备列表
-    var subDevicesCache = this._subDevices[params.did];
+        var subDevicesCache = this._subDevices[params.did];
     if (!subDevicesCache) {
-        this._sendError("Device do not have subDevices be cached.");
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
         return;
     }
 
@@ -444,22 +546,27 @@ GizwitsJS.prototype.removeSubDevice = function(params) {
  * MAC与ProductKey绑定设备(如果是微信开发者,能够通过微信完成设备绑定的,不需要调用此接口)
  *
  * @param {Object} params 指定参数对象({ device: { mac: "xxx", productKey: "yyy"}, bindInfo: { product_secret: "zzz", device_bind_url: "www" }})
- * @see 成功回调接口 onBindDevice
- * @see 失败回调接口 onError
+ * @see 成功回调接口 onBindDevice(ret, err) 成功ret非空失败err非空
  */
 GizwitsJS.prototype.bindDevice = function(params) {
     if (!params) {
-        this._sendError("Call bindDevice with invaild params " + params);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params " + params);
         return;
     }
 
     if (!params.device) {
-        this._sendError("Call bindDevice with invaild params.device " + params.device);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params.device " + params.device);
         return;
     }
 
     if (!params.bindInfo) {
-        this._sendError("Call bindDevice with invaild params.bindInfo " + params.bindInfo);
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params.bindInfo " + params.bindInfo);
         return;
     }
 
@@ -468,7 +575,9 @@ GizwitsJS.prototype.bindDevice = function(params) {
     } else if (params.bindInfo.device_bind_url) {
         this._bindDeviceCustom(params.device.mac, params.device.productKey, params.bindInfo.device_bind_url);
     } else {
-        this._sendError("Please special valid product_secret or device_bind_url in bindInfo when calling bindDevice.");
+        this._sendError(this.onUpdateSubDevices,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Please special valid product_secret or device_bind_url in bindInfo when calling bindDevice.");
     }
 }
 
@@ -488,7 +597,7 @@ GizwitsJS.prototype._bindDeviceByMAC = function(mac, productKey, productSecret) 
     $.ajax(url, {
             type: "POST",
             contentType: "application/json",
-            headers: { 
+            headers: {
                 "X-Gizwits-Application-Id": gizJS._appID,
                 "X-Gizwits-User-token": gizJS._userToken,
                 "X-Gizwits-Timestamp": timestamp,
@@ -510,11 +619,15 @@ GizwitsJS.prototype._bindDeviceByMAC = function(mac, productKey, productSecret) 
                 }
                 gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
             } else {
-                gizJS._sendError("bindDevice response invaild result: " + JSON.stringify(result));
+                gizJS._sendError(this.onBindDevice,
+                    ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
+                    "bindDevice response invaild result: " + JSON.stringify(result));
             }
         })
         .fail(function(evt) {
-            gizJS._sendError("bindDevice error: " + evt.responseText);
+            gizJS._sendError(this.onBindDevice,
+                ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
+                "bindDevice error: " + evt.responseText);
         });
 }
 
@@ -553,11 +666,15 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
                 }
                 gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
             } else {
-                gizJS._sendError("bindDevice response invaild result: " + JSON.stringify(result));
+                gizJS._sendError(this.onBindDevice,
+                    ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
+                    "bindDevice response invaild result: " + JSON.stringify(result));
             }
         })
         .fail(function(evt) {
-            gizJS._sendError("bindDevice error: " + evt.responseText);
+            gizJS._sendError(this.onBindDevice,
+                ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
+                "bindDevice error: " + evt.responseText);
         });
 }
 
@@ -582,7 +699,9 @@ GizwitsJS.prototype._getUserToken = function() {
             gizJS._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
         })
         .fail(function(evt) {
-            gizJS._sendError("Init error when getting user token: " + evt.responseText);
+            gizJS._sendError(this.onDiscoverDevices,
+                ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED,
+                "get user token failed: " + evt.responseText);
         });
 };
 
@@ -612,7 +731,9 @@ GizwitsJS.prototype._getBoundDevices = function(limit, skip) {
         })
         .fail(function(evt) {
             gizJS._boundDevices = {};
-            gizJS._sendError("getBoundDevices error: " + evt.responseText);
+            gizJS._sendError(this.onDiscoverDevices,
+                ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED,
+                "getBoundDevices error: " + evt.responseText);
         });
 };
 
@@ -638,7 +759,9 @@ Connection.prototype._onWSOpen = function(evt) {
 
 Connection.prototype._onWSClose = function(evt) {
     this._stopPing();
-    this._callbackObj._sendError("Websocket Connect failed, please try again after a moment.");
+    this._callbackObj._sendError(null,
+        ERROR_CODE.GIZ_SDK_WEB_SOCKET_CLOSED,
+        "Websocket Connect failed, please try again after a moment.");
 };
 
 Connection.prototype._onWSMessage = function(evt) {
@@ -667,7 +790,10 @@ Connection.prototype._onWSMessage = function(evt) {
                 }
                 for (var i = failedDids.length - 1; i >= 0; i--) {
                     this._removeSubscribeDid(failedDids[j].did);
-                    this._callbackObj._sendError("connect error with did: " + failedDids[j].did + ", please try again.");
+                    this._callbackObj._sendError(this.callback.onSubscribeDevice,
+                        ERROR_CODE.GIZ_SDK_SUBSCRIBE_FAILED,
+                        "subscribe device failed, please try again.",
+                        failedDids[j].did);
                 }
             }
             break;
@@ -748,14 +874,18 @@ Connection.prototype._onWSMessage = function(evt) {
             if (1009 === errorCode) {
                 this._tryLoginAgain();
             } else {
-                this._callbackObj._sendError("ErrorCode " + errorCode + ": " + res.data.msg);
+                this._callbackObj._sendError(null,
+                    ERROR_CODE.GIZ_SDK_WEB_SOCKET_INVALID,
+                    "ErrorCode " + errorCode + ": " + res.data.msg);
             }
             break;
     }
 };
 
 Connection.prototype._onWSError = function(evt) {
-    this._callbackObj._sendError("Websocket on error");
+    this._callbackObj._sendError(null,
+        ERROR_CODE.GIZ_SDK_WEB_SOCKET_ERROR,
+        "Websocket on error");
 };
 
 Connection.prototype._startPing = function() {
@@ -781,6 +911,9 @@ Connection.prototype._sendJson = function(json) {
         return true;
     } else {
         console.log("[" + Date() + "]Send data " + data + " error, websocket is not connected.");
+        this._callbackObj._sendError(null,
+            ERROR_CODE.GIZ_SDK_WEB_SOCKET_INVALID,
+            "Websocket is not connected, please try to subscribe device again");
         this._stopPing();
         return false;
     }
@@ -880,16 +1013,16 @@ GizwitsJS.prototype._onDiscoverDevices = function(callback) {
             }
         }
 
-        callback({ devices: devices });
+        callback({ devices: devices }, null);
     }
 }
 
 GizwitsJS.prototype._getDevTypeByStr = function(typeStr) {
     var type = 0;
 
-    if ('center_control' === typeStr) {
+    if (DEV_TYPE_CENTER_CONTROL === typeStr) {
         type = 1;
-    } else if ('sub_dev' === typeStr) {
+    } else if (DEV_TYPE_SUB === typeStr) {
         type = 2;
     } else {
         type = 0;
@@ -902,7 +1035,10 @@ GizwitsJS.prototype._sendJson = function(device, dataType, json) {
     //找到设备传输自定义数据的Websocket连接
     var conn = this._connections[this._getConntionsKey(device, dataType)];
     if (!conn) {
-        this._sendError("Websocket of " + dataType + " is not connected.");
+        this._sendError(null,
+            ERROR_CODE.GIZ_SDK_WEB_SOCKET_INVALID,
+            "Websocket is not connected, please try to subscribe device again",
+            device.did);
         return;
     }
 
@@ -934,9 +1070,37 @@ GizwitsJS.prototype._connect = function(device, dataType) {
     }
 }
 
-GizwitsJS.prototype._sendError = function(msg) {
-    if (this.onError) {
-        this.onError(msg);
+GizwitsJS.prototype._sendError = function(callback, code, msg, did) {
+    if (callback) {
+        if (did) {
+            callback(null, {
+                error_code: code,
+                error_message: msg,
+                did: did
+            });
+        } else {
+            callback(null, {
+                error_code: code,
+                error_message: msg,
+            });
+        }
+    } else if (this.onEventNotify) {
+        if (did) {
+            this.onEventNotify({
+                event_id: code,
+                event_content: {
+                    detail: msg,
+                    did: did
+                }
+            });
+        } else {
+            this.onEventNotify({
+                event_id: code,
+                event_content: {
+                    detail: msg
+                }
+            });
+        }
     }
 };
 
@@ -1059,6 +1223,10 @@ Array.prototype.bin2string = function(index, len) {
     var str = "";
 
     for (var i = 0; i < len; i++) {
+        //遇到0则结束
+        if (!this[index + i]) {
+            break;
+        }
         str += String.fromCharCode(this[index + i]);
     }
 
