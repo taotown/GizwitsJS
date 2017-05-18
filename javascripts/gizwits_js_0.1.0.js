@@ -158,7 +158,7 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onSubscribeDevice,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             "Invaild did", params.did);
         return;
     }
@@ -191,7 +191,7 @@ GizwitsJS.prototype.read = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onReceiveData,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
@@ -201,7 +201,7 @@ GizwitsJS.prototype.read = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onReceiveData,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
@@ -249,7 +249,7 @@ GizwitsJS.prototype.write = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onReceiveData,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
@@ -259,7 +259,7 @@ GizwitsJS.prototype.write = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onReceiveData,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
@@ -311,7 +311,7 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
 
     if (!typeof this._boundDevices) {
         this._sendError(this.onUpdateSubDevices,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
@@ -321,7 +321,7 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onUpdateSubDevices,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
@@ -382,7 +382,7 @@ GizwitsJS.prototype.addSubDevice = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onUpdateSubDevices,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
@@ -392,7 +392,7 @@ GizwitsJS.prototype.addSubDevice = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onUpdateSubDevices,
-            GIZ_SDK_DEVICE_DID_INVALID,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
             arguments.callee.name + ": invaild did",
             params.did);
         return;
