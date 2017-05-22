@@ -859,7 +859,7 @@ Connection.prototype._onWSClose = function(evt) {
 };
 
 Connection.prototype._onWSMessage = function(evt) {
-    console.info(evt);
+    // console.info(evt);
     var res = JSON.parse(evt.data);
     switch (res.cmd) {
         case "pong":
