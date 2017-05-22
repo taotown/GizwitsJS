@@ -35,7 +35,8 @@ var ERROR_CODE = {
     GIZ_SDK_WEB_SOCKET_CLOSED: 8900,
     GIZ_SDK_SUBSCRIBE_FAILED: 8901,
     GIZ_SDK_WEB_SOCKET_INVALID: 8902,
-    GIZ_SDK_WEB_SOCKET_ERROR: 8903
+    GIZ_SDK_WEB_SOCKET_ERROR: 8903,
+    GIZ_SDK_SET_DEVICE_INFO_ERROR: 8904
 }
 
 /**
@@ -69,6 +70,7 @@ function GizwitsJS(params) {
     this.onBindDevice = undefined;
     this.onEventNotify = undefined;
     this.onReceiveData = undefined;
+    this.onSetDeviceInfo = undefined;
     this.onGetDeviceList = undefined;
     this.onDiscoverDevices = undefined;
     this.onSubscribeDevice = undefined;
@@ -330,7 +332,7 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
     if (device.type != DEV_TYPE_CENTER_CONTROL) {
         this._sendError(this.onUpdateSubDevices,
             ERROR_CODE.GIZ_SDK_DEVICE_NOT_CENTERCONTROL,
-            arguments.callee.name  + ": is not center control device",
+            arguments.callee.name + ": is not center control device",
             params.did);
         return;
     }
@@ -401,7 +403,7 @@ GizwitsJS.prototype.addSubDevice = function(params) {
     if (device.type != DEV_TYPE_CENTER_CONTROL) {
         this._sendError(this.onUpdateSubDevices,
             ERROR_CODE.GIZ_SDK_DEVICE_NOT_CENTERCONTROL,
-            arguments.callee.name  + ": is not center control device",
+            arguments.callee.name + ": is not center control device",
             params.did);
         return;
     }
@@ -494,13 +496,13 @@ GizwitsJS.prototype.removeSubDevice = function(params) {
     if (device.type != DEV_TYPE_CENTER_CONTROL) {
         this._sendError(this.onUpdateSubDevices,
             ERROR_CODE.GIZ_SDK_DEVICE_NOT_CENTERCONTROL,
-            arguments.callee.name  + ": is not center control device",
+            arguments.callee.name + ": is not center control device",
             params.did);
         return;
     }
 
     //找到指定设备标识码对应的设备对象下的子设备列表
-        var subDevicesCache = this._subDevices[params.did];
+    var subDevicesCache = this._subDevices[params.did];
     if (!subDevicesCache) {
         this._sendError(this.onUpdateSubDevices,
             ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
@@ -543,7 +545,7 @@ GizwitsJS.prototype.removeSubDevice = function(params) {
 }
 
 /**
- * MAC与ProductKey绑定设备(如果是微信开发者,能够通过微信完成设备绑定的,不需要调用此接口)
+ * 通过MAC与ProductKey绑定设备(如果是微信开发者,能够通过微信完成设备绑定的,不需要调用此接口)
  *
  * @param {Object} params 指定参数对象({ device: { mac: "xxx", productKey: "yyy"}, bindInfo: { product_secret: "zzz", device_bind_url: "www" }})
  * @see 成功回调接口 onBindDevice(ret, err) 成功ret非空失败err非空
@@ -581,9 +583,101 @@ GizwitsJS.prototype.bindDevice = function(params) {
     }
 }
 
+/**
+ * 修改设备信息
+ *
+ * @param {Object} params 指定参数对象({ did: "xxx", alias: "yyy", remark: "zzz"})
+ * @see 成功回调接口 onSetDeviceInfo(ret, err) 成功ret非空失败err非空
+ */
+GizwitsJS.prototype.setDeviceInfo = function(params) {
+    if (!params) {
+        this._sendError(this.onSetDeviceInfo,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError(this.onSetDeviceInfo,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params.did " + params.did);
+        return;
+    }
+
+    if (null == params.remark && null == params.alias) {
+        this._sendError(this.onSetDeviceInfo,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params.remark " + params.remark + " and params.alias " + params.alias);
+        return;
+    }
+
+    //找到指定设备标识码对应的设备对象
+    var device = this._boundDevices[params.did];
+    if (!device) {
+        this._sendError(this.onSetDeviceInfo,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
+        return;
+    }
+
+    this._setDeviceInfo(params.did, params.alias, params.remark);
+}
+
 //=========================================================
 // http functions
 //=========================================================
+GizwitsJS.prototype._setDeviceInfo = function(did, alias, remark) {
+    var gizJS = this;
+    var isChanged = false;
+    var url = "https://{0}/app/bindings/".format(gizJS._apiHost) + did;
+    var dataObj = {};
+
+    if (remark) {
+        dataObj.remark = remark;
+    }
+    if (alias) {
+        dataObj.dev_alias = alias;
+    }
+    var data = JSON.stringify(dataObj);
+    $.ajax(url, {
+            type: "PUT",
+            contentType: "application/json",
+            headers: {
+                "X-Gizwits-Application-Id": gizJS._appID,
+                "X-Gizwits-User-token": gizJS._userToken
+            },
+            dataType: "json",
+            data: data
+        })
+        .done(function(result) {
+            if (result.remark) {
+                if (gizJS._boundDevices[did].remark != result.remark) {
+                    gizJS._boundDevices[did].remark = result.remark;
+                    isChanged = true;
+                }
+            }
+            if (result.dev_alias) {
+                if (gizJS._boundDevices[did].dev_alias != result.dev_alias) {
+                    gizJS._boundDevices[did].dev_alias = result.dev_alias;
+                    isChanged = true;
+                }
+            }
+            if (gizJS.onSetDeviceInfo) {
+                gizJS.onSetDeviceInfo({ did: did });
+            }
+            if (isChanged) {
+                gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
+            }
+        })
+        .fail(function(evt) {
+            gizJS._sendError(this.onSetDeviceInfo,
+                ERROR_CODE.GIZ_SDK_SET_DEVICE_INFO_ERROR,
+                "set device info error: " + evt.responseText,
+                did);
+        });
+}
+
 GizwitsJS.prototype._bindDeviceByMAC = function(mac, productKey, productSecret) {
     var gizJS = this;
     var timestamp = Date.now() / 1000 >> 0; //去当前时间戳
@@ -636,7 +730,7 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
     var data = JSON.stringify({
         wechat_openId: gizJS._openID,
         mac: mac,
-        product_key: product_key
+        product_key: productKey
     });
 
     $.ajax(customURL, {
@@ -765,6 +859,7 @@ Connection.prototype._onWSClose = function(evt) {
 };
 
 Connection.prototype._onWSMessage = function(evt) {
+    console.info(evt);
     var res = JSON.parse(evt.data);
     switch (res.cmd) {
         case "pong":
@@ -785,7 +880,9 @@ Connection.prototype._onWSMessage = function(evt) {
             if (P0_TYPE_CUSTOM === this._dataType) {
                 if (this._callbackObj.onSubscribeDevice) {
                     for (var i = successDids.length - 1; i >= 0; i--) {
-                        this._callbackObj.onSubscribeDevice(successDids[i].did);
+                        this._callbackObj.onSubscribeDevice({
+                            did: successDids[i].did
+                        });
                     }
                 }
                 for (var i = failedDids.length - 1; i >= 0; i--) {

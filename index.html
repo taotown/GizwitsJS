@@ -34,8 +34,8 @@
             gizwitsAppId: gizwitsAppID
         });
 
-        gGizwitsJS.onError = onError;
         gGizwitsJS.onBindDevice = onBindDevice;
+        gGizwitsJS.onEventNotify = onEventNotify;
         gGizwitsJS.onReceiveData = onReceiveData;
         gGizwitsJS.onDiscoverDevices = onDiscoverDevices;
         gGizwitsJS.onSubscribeDevice = onSubscribeDevice;
@@ -63,7 +63,7 @@
 
     function read() {
         var did = $('#readDid').val();
-        var attrs = $('#attrs').val();
+        var attrs = $('#attrsForRead').val();
         if (attrs) {
             gGizwitsJS.read({
                 did: did,
@@ -81,7 +81,7 @@
         var rawObj;
         var attrsObj;
         var raw = $('#raw').val();
-        var attrs = $('#attrs').val();
+        var attrs = $('#attrsForWrite').val();
         var did = $('#writeDid').val();
         try {
             if (raw) {
@@ -163,6 +163,16 @@
         showScreen("已发送绑定(子)设备指令: bindInfo=" + bindInfo + ", device=" + device);
     }
 
+    function setDeviceInfo() {
+        var params = $('#deviceForSetting').val();
+        if (params) {
+            gGizwitsJS.setDeviceInfo(JSON.parse(params));
+        } else {
+            gGizwitsJS.setDeviceInfo({});
+        }
+        showScreen("已发送修改设备信息指令: params=" + params);
+    }
+
     function clearLog() {
         $('#log').html("");
     }
@@ -170,96 +180,121 @@
     //=========================================================
     // callback functions
     //=========================================================
-    function onDiscoverDevices(devices) {
-        var deviceArray = devices.devices;
-        if (deviceArray.length) {
-            for (var i = deviceArray.length - 1; i >= 0; i--) {
-                var device = deviceArray[i];
-                showScreen("==================================================");
-                showScreen("更新设备列表:product_key=" + device.product_key);
-                showScreen("更新设备列表:did=" + device.did);
-                showScreen("更新设备列表:mac=" + device.mac);
-                showScreen("更新设备列表:is_subscribe=" + device.is_subscribe);
-                showScreen("更新设备列表:is_online=" + device.is_online);
-                showScreen("更新设备列表:is_bind=" + device.is_bind);
-                showScreen("更新设备列表:type=" + device.type);
-                showScreen("更新设备列表:dev_alias=" + device.dev_alias);
-                showScreen("更新设备列表:remark=" + device.remark);
+    function onDiscoverDevices(ret, err) {
+        if (ret) {
+            var deviceArray = ret.devices;
+            if (deviceArray.length) {
+                for (var i = deviceArray.length - 1; i >= 0; i--) {
+                    var device = deviceArray[i];
+                    showScreen("==================================================");
+                    showScreen("更新设备列表:product_key=" + device.product_key);
+                    showScreen("更新设备列表:did=" + device.did);
+                    showScreen("更新设备列表:mac=" + device.mac);
+                    showScreen("更新设备列表:is_subscribe=" + device.is_subscribe);
+                    showScreen("更新设备列表:is_online=" + device.is_online);
+                    showScreen("更新设备列表:is_bind=" + device.is_bind);
+                    showScreen("更新设备列表:type=" + device.type);
+                    showScreen("更新设备列表:alias=" + device.alias);
+                    showScreen("更新设备列表:remark=" + device.remark);
 
-                addSelectOption('#subscribeDeviceDid', device.did, device.did);
+                    addSelectOption('#subscribeDeviceDid', device.did, device.did);
 
-                gBoundDevices[device.did] = device;
+                    gBoundDevices[device.did] = device;
+                }
+            } else {
+                showScreen("没有绑定的设备");
             }
         } else {
-            showScreen("没有绑定的设备");
+            showErr(arguments.callee.name, err);
         }
     }
 
-    function onUpdateSubDevices(ret) {
-        var did = ret.did;
-        var subDevices = ret.subDevices;
-        gSubDevices[did] = {}; //清空子设备列表缓存
-        if (subDevices.length) {
-            for (var i = subDevices.length - 1; i >= 0; i--) {
-                var subDevice = subDevices[i];
-                showScreen("==================================================");
-                showScreen("更新子设备:所属中控did=" + did);
-                showScreen("更新子设备:product_key=" + subDevice.product_key);
-                showScreen("更新子设备:did=" + subDevice.did);
-                showScreen("更新子设备:mac=" + subDevice.mac);
-                showScreen("更新子设备:is_online=" + subDevice.is_online);
+    function onUpdateSubDevices(ret, err) {
+        if (ret) {
+            var did = ret.did;
+            var subDevices = ret.subDevices;
+            gSubDevices[did] = {}; //清空子设备列表缓存
+            if (subDevices.length) {
+                for (var i = subDevices.length - 1; i >= 0; i--) {
+                    var subDevice = subDevices[i];
+                    showScreen("==================================================");
+                    showScreen("更新子设备:所属中控did=" + did);
+                    showScreen("更新子设备:product_key=" + subDevice.product_key);
+                    showScreen("更新子设备:did=" + subDevice.did);
+                    showScreen("更新子设备:mac=" + subDevice.mac);
+                    showScreen("更新子设备:is_online=" + subDevice.is_online);
 
-                addSelectOption('#subDid', subDevice.did, subDevice.did);
+                    addSelectOption('#subDid', subDevice.did, subDevice.did);
 
-                gSubDevices[did][subDevice.did] = subDevice;
+                    gSubDevices[did][subDevice.did] = subDevice;
+                }
+            } else {
+                showScreen("中控 " + did + " 没有子设备");
             }
         } else {
-            showScreen("中控 " + did + " 没有子设备");
+            showErr(arguments.callee.name, err);
         }
     }
 
-    function onSubscribeDevice(did) {
-        addSelectOption('#readDid', did, did);
-        addSelectOption('#writeDid', did, did);
-        var device = gBoundDevices[did];
-        if (device) {
-            addSelectOption('#addSubDeviceDid', did, did);
-            addSelectOption('#removeSubDeviceDid', did, did);
-            addSelectOption('#updateSubdevicesDid', did, did);
-        }
-
-        showScreen("订阅设备:" + did + "成功!");
-    }
-
-    function onDeviceOnlineStatusChanged(value) {
-        showScreen("设备上下线通知，did=" + value.did);
-        showScreen("设备上下线通知，is_online=" + value.is_online);
-    }
-
-    function onReceiveData(value) {
-        if (value.attrs) {
-            var str = "收到设备 " + value.did + " 的Attrs: ";
-            for (var key in value.attrs) {
-                str = str + key + ":" + value.attrs[key] + ",";
+    function onSubscribeDevice(ret, err) {
+        if (ret) {
+            var did = ret.did;
+            addSelectOption('#readDid', did, did);
+            addSelectOption('#writeDid', did, did);
+            var device = gBoundDevices[did];
+            if (device) {
+                addSelectOption('#addSubDeviceDid', did, did);
+                addSelectOption('#removeSubDeviceDid', did, did);
+                addSelectOption('#updateSubdevicesDid', did, did);
             }
-            str = str.substr(0, str.length - 1);
-            showScreen(str);
-        } else if (value.raw) {
-            var str = "收到设备 " + value.did + " 的Raw: [";
-            for (var i = 0; i < value.raw.length; i++) {
-                str = str + value.raw[i] + ",";
-            }
-            str = str.substr(0, str.length - 1) + "]";
-            showScreen(str);
+
+            showScreen("订阅设备:" + did + "成功!");
+        } else {
+            showErr(arguments.callee.name, err);
         }
     }
 
-    function onBindDevice(value) {
-        showScreen("绑定设备:" + value.did + "成功!");
+    function onDeviceOnlineStatusChanged(ret, err) {
+        if (ret) {
+            showScreen("设备上下线通知，did=" + ret.did);
+            showScreen("设备上下线通知，is_online=" + ret.is_online);
+        } else {
+            showErr(arguments.callee.name, err);
+        }
     }
 
-    function onError(value) {
-        showError(value.toString());
+    function onReceiveData(ret, err) {
+        if (ret) {
+            if (ret.attrs) {
+                var str = "收到设备 " + ret.did + " 的Attrs: ";
+                for (var key in ret.attrs) {
+                    str = str + key + ":" + ret.attrs[key] + ",";
+                }
+                str = str.substr(0, str.length - 1);
+                showScreen(str);
+            } else if (ret.raw) {
+                var str = "收到设备 " + ret.did + " 的Raw: [";
+                for (var i = 0; i < ret.raw.length; i++) {
+                    str = str + ret.raw[i] + ",";
+                }
+                str = str.substr(0, str.length - 1) + "]";
+                showScreen(str);
+            }
+        } else {
+        	showErr(arguments.callee.name, err);
+        }
+    }
+
+    function onBindDevice(ret) {
+    	if (ret) {
+    		showScreen("绑定设备:" + ret.did + "成功!");
+    	} else {
+    		showErr(arguments.callee.name, err);
+    	}
+    }
+
+    function onEventNotify(ret) {
+        showError("onEventNotify:" + JSON.stringify(ret));
     }
 
     //=========================================================
@@ -267,6 +302,14 @@
     //=========================================================
     function showScreen(txt) {
         $('#log').prepend('<p style="color: blue">' + txt + '</p>');
+    }
+
+    function showErr(func, err) {
+        if (err.did) {
+            showError(func + ":error_code=" + err.error_code + ", error_message=" + err.error_message + ", did=" + err.did);
+        } else {
+            showError(func + ":error_code=" + err.error_code + ", error_message=" + err.error_message);
+        }
     }
 
     function showError(txt) {
@@ -329,34 +372,34 @@
                 <button id="newObj" onclick="newObj()">Do it!</button>
                 <br/>
                 <p>（初始化对象的过程中，已经自动完成了callback函数的创建。）</p>
-                <h4>2. 然后，使用GizwitsJS.discoverDevices()获取设备列表</h4>
+                <h4>2. 然后，使用GizwitsJS.discoverDevices()刷新设备列表</h4>
                 <button id="discoverDevices" onclick="discoverDevices()">Do it!</button>
                 <br/>
-                <p>（设备列表会在onDiscoverDevices这个callback函数返回。）</p>
+                <p>（刷新结果会在onDiscoverDevices这个callback函数返回。）</p>
                 <h4>3. 接着，订阅一个设备</h4>
                 <label style="display:inline-block;width: 90px">did:</label>
                 <select id="subscribeDeviceDid" about="" style="width: 300px;"></select>
                 <button id="subscribeDevice" onclick="subscribeDevice()">Do it!</button>
                 <br/>
-                <p>（订阅成功，会在onSubscribeDevice这个callback函数返回。）</p>
+                <p>（订阅结果会在onSubscribeDevice这个callback函数返回。）</p>
                 <h4>4. 选择已订阅设备,读取状态</h4>
                 <label style="display:inline-block;width: 90px">did:</label>
                 <select id="readDid" about="" style="width: 300px;"></select>
                 <br/>
                 <label>attrs:</label>
                 <br/>
-                <textarea rows="5" cols="90" id="attrs" placeholder='对于定义了变长数据点的设备可以指定关心的数据点名称读取相应的数据点状态，例如["A01","A02", ...]，不填写内容则表示读取所有数据点；对于定义了定长数据点的设备只支持不指定数据点名称来读取所有数据点'></textarea>
+                <textarea rows="5" cols="90" id="attrsForRead" placeholder='对于定义了变长数据点的设备可以指定关心的数据点名称读取相应的数据点状态，例如["A01","A02", ...]，不填写内容则表示读取所有数据点；对于定义了定长数据点的设备只支持不指定数据点名称来读取所有数据点'></textarea>
                 <br/>
                 <button id="read" onclick="read()">Do it!</button>
                 <br/>
-                <p>（发送指令成功后，稍后会收到设备状态信息。）</p>
+                <p>（读取结果在onReceiveData这个callback函数返回。）</p>
                 <h4>5. 选择已订阅设备，控制一下</h4>
                 <label style="display:inline-block;width: 90px">did:</label>
                 <select id="writeDid" about="" style="width: 300px;"></select>
                 <br/>
                 <label>attrs:</label>
                 <br/>
-                <textarea rows="10" cols="90" id="attrs" placeholder='以数据点方式控制设备，请输入数据点键值对，例如{"power":true,"speed":0,...}，如果设备支持，可以与自定义方式同时使用'></textarea>
+                <textarea rows="10" cols="90" id="attrsForWrite" placeholder='以数据点方式控制设备，请输入数据点键值对，例如{"power":true,"speed":0,...}，如果设备支持，可以与自定义方式同时使用'></textarea>
                 <br/>
                 <label>raw:</label>
                 <br/>
@@ -364,13 +407,13 @@
                 <br/>
                 <button id="writeCommand" onclick="writeCommand()">Do it!</button>
                 <br/>
-                <p>（发送指令成功后，稍后会收到设备状态信息。）</p>
+                <p>（控制结果在onReceiveData这个callback函数返回。）</p>
                 <h4>6. 选择已订阅中控设备，更新一下子设备列表</h4>
                 <label style="display:inline-block;width: 90px">did:</label>
                 <select id="updateSubdevicesDid" about="" style="width: 300px;"></select>
                 <button id="updateSubDevices" onclick="updateSubDevices()">Do it!</button>
                 <br/>
-                <p>（子设备列表会在onUpdateSubDevices这个callback函数返回。）</p>
+                <p>（更新结果在onUpdateSubDevices这个callback函数返回。）</p>
                 <h4>7. 选择已连接中控设备，添加一下子设备</h4>
                 <label style="display:inline-block;width: 90px">did:</label>
                 <select id="addSubDeviceDid" about="" style="width: 300px;"></select>
@@ -381,7 +424,7 @@
                 <br/>
                 <button id="addSubDevice" onclick="addSubDevice()">Do it!</button>
                 <br/>
-                <p>（若添加上子设备，变化的子设备列表会在onUpdateSubDevices这个callback函数返回。）</p>
+                <p>（添加结果会在onUpdateSubDevices这个callback函数返回。）</p>
                 <h4>8. 选择已订阅中控设备及其子设备，删除一下子设备</h4>
                 <label style="display:inline-block;width: 90px">did:</label>
                 <select id="removeSubDeviceDid" about="" style="width: 300px;"></select>
@@ -392,9 +435,8 @@
                 <br/>
                 <button id="removeSubDevice" onclick="removeSubDevice()">Do it!</button>
                 <br/>
-                <p>（若删除掉子设备，变化的子设备列表会在onUpdateSubDevices这个callback函数返回。）</p>
+                <p>（删除结果会在onUpdateSubDevices这个callback函数返回。）</p>
                 <h4>9. 选择一个已存在的(子)设备，绑定一下(子)设备</h4>
-                <br/>
                 <label>device:</label>
                 <br/>
                 <textarea rows="5" cols="90" id="deviceForBinding" placeholder='填写待绑定的(子)设备信息device,例如{"mac":"xxx","productKey":"yyy"}'></textarea>
@@ -406,6 +448,14 @@
                 <button id="bindDevice" onclick="bindDevice()">Do it!</button>
                 <br/>
                 <p>（若绑定(子)设备成功，会在onBindDevice这个callback函数返回。）</p>
+                <h4>10. 选择一个已绑定设备，修改一下设备信息</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="deviceForSetting" placeholder='填写待修改的已绑定设备信息params,例如{"did":"xxx","alias":"yyy","remark":"zzz"}'></textarea>
+                <br/>
+                <button id="bindDevice" onclick="setDeviceInfo()">Do it!</button>
+                <br/>
+                <p>（修改结果，会在onSetDeviceInfo这个callback函数返回。）</p>
             </td>
             <td align="left" valign="top" style="padding: 0 0 0 10px;">
                 <button id="clear" onclick="clearLog();">clear</button>
