@@ -859,7 +859,8 @@ Connection.prototype._onWSClose = function(evt) {
 };
 
 Connection.prototype._onWSMessage = function(evt) {
-    // console.info(evt);
+    console.log("------------> time = " + Date());
+    console.info(evt);
     var res = JSON.parse(evt.data);
     switch (res.cmd) {
         case "pong":
@@ -989,7 +990,7 @@ Connection.prototype._startPing = function() {
     conn = this;
     if (!conn._heartbeatTimerID) {
         var heartbeatInterval = conn._callbackObj._heartbeatInterval * 1000;
-        conn._heartbeatTimerID = window.setInterval(function() { conn._sendJson({ cmd: "ping" }) }, heartbeatInterval);
+        conn._heartbeatTimerID = window.setInterval(function() { conn._sendJson({ cmd: "ping" }); console.log("========> Ping at " + Date()); }, heartbeatInterval);
     }
 };
 
