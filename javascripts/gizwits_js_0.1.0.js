@@ -7,7 +7,6 @@
 var LEN_DID = 22; //设备识别码长度
 var CHAR_SIZE = 8; //指定MD5加密支持编码. 8 - ASCII; 16 - Unicode
 var LEN_PRODUCT_KEY = 32; //产品标识码长度
-var P0_TYPE_CUSTOM = "custom"; //自定义P0
 var P0_TYPE_ATTRS_V4 = "attrs_v4"; //数据点协议P0
 var PROTOCOL_VER = [0x00, 0x00, 0x00, 0x03]; //P0协议版本号
 var RETRY_WAIT_TIME = 5000; //用户重登/Websocket重连间隔(毫秒)
@@ -96,12 +95,10 @@ function GizwitsJS(params) {
  * 
  * @class
  * @param {String}   wsInfo   指定Websocket域名信息
- * @param {String}   dataType 指定数据类型(数据点数据attrs_v4 or 自定义数据custom)
  * @param {Function} callback 指定回调对象
  */
-function Connection(wsInfo, dataType, callback) {
+function Connection(wsInfo, callback) {
     this._subscribedDids = {};
-    this._dataType = dataType;
     this._loginFailedCount = 0;
     this._websocket = undefined;
     this._callbackObj = callback;
@@ -165,9 +162,8 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
         return;
     }
 
-    //每个设备创建两个Websocket分别用于传输数据点数据跟自定义数据
-    this._connect(device, P0_TYPE_ATTRS_V4);
-    this._connect(device, P0_TYPE_CUSTOM);
+    //创建Websocket用于传输数据点数据跟自定义数据
+    this._connect(device);
 };
 
 /**
@@ -211,7 +207,7 @@ GizwitsJS.prototype.read = function(params) {
 
     //往Websocket连接发送数据点数据读请求
     if (params.attrs) {
-        this._sendJson(device, P0_TYPE_ATTRS_V4, {
+        this._sendJson(device, {
             cmd: "c2s_read",
             data: {
                 did: params.did,
@@ -219,7 +215,7 @@ GizwitsJS.prototype.read = function(params) {
             }
         });
     } else {
-        this._sendJson(device, P0_TYPE_ATTRS_V4, {
+        this._sendJson(device, {
             cmd: "c2s_read",
             data: {
                 did: params.did
@@ -269,7 +265,7 @@ GizwitsJS.prototype.write = function(params) {
 
     if (params.attrs) {
         //往Websocket连接发送数据点数据
-        this._sendJson(device, P0_TYPE_ATTRS_V4, {
+        this._sendJson(device, {
             cmd: "c2s_write",
             data: {
                 did: params.did,
@@ -280,7 +276,7 @@ GizwitsJS.prototype.write = function(params) {
 
     if (params.raw) {
         //往Websocket连接发送自定义数据
-        this._sendJson(device, P0_TYPE_CUSTOM, {
+        this._sendJson(device, {
             cmd: "c2s_raw",
             data: {
                 did: params.did,
@@ -352,7 +348,7 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
     var data = PROTOCOL_VER.concat(this._getMQTTLenArray(index)).concat(Array.from(remainData.slice(0, index)));
 
     //往Websocket连接发送自定义数据
-    this._sendJson(device, P0_TYPE_CUSTOM, {
+    this._sendJson(device, {
         cmd: "c2s_raw",
         data: {
             did: params.did,
@@ -437,7 +433,7 @@ GizwitsJS.prototype.addSubDevice = function(params) {
     var data = PROTOCOL_VER.concat(this._getMQTTLenArray(index)).concat(Array.from(remainData.slice(0, index)));
 
     //往Websocket连接发送自定义数据
-    this._sendJson(device, P0_TYPE_CUSTOM, {
+    this._sendJson(device, {
         cmd: "c2s_raw",
         data: {
             did: params.did,
@@ -533,7 +529,7 @@ GizwitsJS.prototype.removeSubDevice = function(params) {
             var data = PROTOCOL_VER.concat(this._getMQTTLenArray(index)).concat(Array.from(remainData.slice(0, index)));
 
             //往Websocket连接发送自定义数据
-            this._sendJson(device, P0_TYPE_CUSTOM, {
+            this._sendJson(device, {
                 cmd: "c2s_raw",
                 data: {
                     did: params.did,
@@ -701,10 +697,6 @@ GizwitsJS.prototype._bindDeviceByMAC = function(mac, productKey, productSecret) 
             data: data
         })
         .done(function(result) {
-            var online = false;
-            if ('online' === result.is_online) {
-                online = true;
-            }
             if (result.did) {
                 gizJS._boundDevices[result.did] = result;
 
@@ -728,8 +720,8 @@ GizwitsJS.prototype._bindDeviceByMAC = function(mac, productKey, productSecret) 
 GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
     var gizJS = this;
     var data = JSON.stringify({
-        wechat_openId: gizJS._openID,
         mac: mac,
+        token: gizJS._userToken,
         product_key: productKey
     });
 
@@ -740,29 +732,39 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
             data: data
         })
         .done(function(result) {
-            var online = false;
-            if ('online' === result.netStatus) {
-                online = true;
-            }
-            if (result.did) {
-                gizJS._boundDevices[result.did] = {
-                    remark: "",
-                    dev_alias: "",
-                    type: "sub_dev",
-                    did: result.did,
-                    mac: result.mac,
-                    is_online: online,
-                    product_key: result.product_key
-                };
+            if (result.host) {
+                gizJS._boundDevices[result.did] = result;
 
                 if (gizJS.onBindDevice) {
                     gizJS.onBindDevice({ did: result.did });
                 }
                 gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
             } else {
-                gizJS._sendError(this.onBindDevice,
-                    ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
-                    "bindDevice response invaild result: " + JSON.stringify(result));
+                var online = false;
+                if ('online' === result.netStatus) {
+                    online = true;
+                }
+                if (result.did) {
+                    gizJS._boundDevices[result.did] = {
+                        remark: "",
+                        dev_alias: "",
+                        type: "sub_dev",
+                        did: result.did,
+                        mac: result.mac,
+                        is_online: online,
+                        product_key: result.product_key
+                    };
+
+                    if (gizJS.onBindDevice) {
+                        gizJS.onBindDevice({ did: result.did });
+                    }
+                    //获取一次绑定设备列表同步绑定信息
+                    gizJS._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
+                } else {
+                    gizJS._sendError(this.onBindDevice,
+                        ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
+                        "bindDevice response invaild result: " + JSON.stringify(result));
+                }
             }
         })
         .fail(function(evt) {
@@ -859,8 +861,7 @@ Connection.prototype._onWSClose = function(evt) {
 };
 
 Connection.prototype._onWSMessage = function(evt) {
-    console.log("------------> time = " + Date());
-    console.info(evt);
+    // console.info(evt);
     var res = JSON.parse(evt.data);
     switch (res.cmd) {
         case "pong":
@@ -878,26 +879,24 @@ Connection.prototype._onWSMessage = function(evt) {
             var failedDids = res.data.failed;
             var successDids = res.data.success;
 
-            if (P0_TYPE_CUSTOM === this._dataType) {
-                if (this._callbackObj.onSubscribeDevice) {
-                    for (var i = successDids.length - 1; i >= 0; i--) {
-                        this._callbackObj.onSubscribeDevice({
-                            did: successDids[i].did
-                        });
-                    }
+            if (this._callbackObj.onSubscribeDevice) {
+                for (var i = successDids.length - 1; i >= 0; i--) {
+                    this._callbackObj.onSubscribeDevice({
+                        did: successDids[i].did
+                    });
                 }
-                for (var i = failedDids.length - 1; i >= 0; i--) {
-                    this._removeSubscribeDid(failedDids[j].did);
-                    this._callbackObj._sendError(this.callback.onSubscribeDevice,
-                        ERROR_CODE.GIZ_SDK_SUBSCRIBE_FAILED,
-                        "subscribe device failed, please try again.",
-                        failedDids[j].did);
-                }
+            }
+            for (var i = failedDids.length - 1; i >= 0; i--) {
+                this._removeSubscribeDid(failedDids[i].did);
+                this._callbackObj._sendError(this.callback.onSubscribeDevice,
+                    ERROR_CODE.GIZ_SDK_SUBSCRIBE_FAILED,
+                    "subscribe device failed, please try again.",
+                    failedDids[i].did);
             }
             break;
         case "s2c_online_status":
             var device = this._callbackObj._boundDevices[res.data.did];
-            if (this._callbackObj.onDeviceOnlineStatusChanged && device && P0_TYPE_CUSTOM === this._dataType) {
+            if (this._callbackObj.onDeviceOnlineStatusChanged && device) {
                 this._callbackObj.onDeviceOnlineStatusChanged({
                     did: device.did,
                     is_online: res.data.online
@@ -932,7 +931,7 @@ Connection.prototype._onWSMessage = function(evt) {
                     this._callbackObj._processSubdeviceOnlineReport(did, actionP0);
                     this._callbackObj._onUpdateSubDevices(did);
                 } else if (P0_CMD_GET_SUBDEVICE_LIST_RESP === action || P0_CMD_REPORT_SUBDEVICE_LIST === action) {
-                    if (this._callbackObj.onUpdateSubDevices && P0_TYPE_CUSTOM === this._dataType) {
+                    if (this._callbackObj.onUpdateSubDevices) {
                         this._callbackObj._processSubdevicesReport(did, actionP0);
                         this._callbackObj._onUpdateSubDevices(did);
                     }
@@ -987,10 +986,10 @@ Connection.prototype._onWSError = function(evt) {
 };
 
 Connection.prototype._startPing = function() {
-    conn = this;
+    var conn = this;
     if (!conn._heartbeatTimerID) {
         var heartbeatInterval = conn._callbackObj._heartbeatInterval * 1000;
-        conn._heartbeatTimerID = window.setInterval(function() { conn._sendJson({ cmd: "ping" }); console.log("========> Ping at " + Date()); }, heartbeatInterval);
+        conn._heartbeatTimerID = window.setInterval(function() { conn._sendJson({ cmd: "ping" }); }, heartbeatInterval);
     }
 };
 
@@ -1028,7 +1027,7 @@ Connection.prototype._login = function() {
             appid: this._callbackObj._appID,
             uid: this._callbackObj._userID,
             token: this._callbackObj._userToken,
-            p0_type: this._dataType,
+            p0_type: P0_TYPE_ATTRS_V4, //attr_v4模式兼容Datapoint跟Raw
             heartbeat_interval: keepalive, // default 180s
             auto_subscribe: false //按需定阅设备以节省开销
         }
@@ -1075,8 +1074,7 @@ GizwitsJS.prototype._onDiscoverDevices = function(callback) {
         //先存入已绑定(子)设备
         for (var key in this._boundDevices) {
             var device = this._boundDevices[key];
-            //找到设备传输自定义数据的Websocket连接
-            var conn = this._connections[this._getConntionsKey(device, P0_TYPE_CUSTOM)];
+            var conn = this._connections[this._getWebsocketConnInfo(device)];
             var isSubscribe = conn ? !!conn._subscribedDids[device.did] : false;
             devices[i++] = {
                 "is_bind": true,
@@ -1129,9 +1127,9 @@ GizwitsJS.prototype._getDevTypeByStr = function(typeStr) {
     return type;
 }
 
-GizwitsJS.prototype._sendJson = function(device, dataType, json) {
-    //找到设备传输自定义数据的Websocket连接
-    var conn = this._connections[this._getConntionsKey(device, dataType)];
+GizwitsJS.prototype._sendJson = function(device, json) {
+    //找到设备传输数据的Websocket连接
+    var conn = this._connections[this._getWebsocketConnInfo(device)];
     if (!conn) {
         this._sendError(null,
             ERROR_CODE.GIZ_SDK_WEB_SOCKET_INVALID,
@@ -1143,26 +1141,23 @@ GizwitsJS.prototype._sendJson = function(device, dataType, json) {
     if (!conn._sendJson(json)) {
         if (Date.now() - conn._lastConnectMilliTimestamp > RETRY_WAIT_TIME) {
             console.log("[" + Date() + "]Send data error, try to connect again.");
-            //每个设备创建两个Websocket分别用于传输数据点数据跟自定义数据
-            this._connect(device, P0_TYPE_ATTRS_V4);
-            this._connect(device, P0_TYPE_CUSTOM);
+            this._connect(device);
             conn._lastConnectMilliTimestamp = Date.now();
             window.setTimeout(function() { conn._login() }, RETRY_SEND_TIME);
         }
     }
 }
 
-GizwitsJS.prototype._connect = function(device, dataType) {
-    var key = this._getConntionsKey(device, dataType);
-    var conn = this._connections[key];
+GizwitsJS.prototype._connect = function(device) {
+    var wsInfo = this._getWebsocketConnInfo(device);
+    var conn = this._connections[wsInfo];
     if (!conn) {
-        var wsInfo = this._getWebsocketConnInfo(device);
-        conn = new Connection(wsInfo, dataType, this);
+        conn = new Connection(wsInfo, this);
     }
     conn._addSubscribeDid(device.did);
     if (!conn._websocket || conn._websocket.readyState != conn._websocket.OPEN) {
         conn._connectWS();
-        this._connections[key] = conn;
+        this._connections[wsInfo] = conn;
     } else {
         conn._subscribeDevices();
     }
@@ -1213,10 +1208,6 @@ GizwitsJS.prototype._getWebsocketConnInfo = function(device) {
     }
 
     return pre + host + ":" + port;
-};
-
-GizwitsJS.prototype._getConntionsKey = function(device, dataType) {
-    return this._getWebsocketConnInfo(device) + "+" + dataType;
 };
 
 GizwitsJS.prototype._getMQTTLenArray = function(len) {
@@ -1306,7 +1297,7 @@ GizwitsJS.prototype._onUpdateSubDevices = function(did) {
         subDevices: subDevices
     });
 
-    //获取一直绑定设备列表同步绑定信息
+    //获取一次绑定设备列表同步绑定信息
     this._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
 }
 
