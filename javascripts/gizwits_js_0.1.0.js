@@ -886,12 +886,12 @@ Connection.prototype._onWSMessage = function(evt) {
                     });
                 }
             }
-            for (var i = failedDids.length - 1; i >= 0; i--) {
-                this._removeSubscribeDid(failedDids[i].did);
+            for (var j = failedDids.length - 1; j >= 0; j--) {
+                this._removeSubscribeDid(failedDids[j].did);
                 this._callbackObj._sendError(this.callback.onSubscribeDevice,
                     ERROR_CODE.GIZ_SDK_SUBSCRIBE_FAILED,
                     "subscribe device failed, please try again.",
-                    failedDids[i].did);
+                    failedDids[j].did);
             }
             break;
         case "s2c_online_status":
@@ -1054,6 +1054,14 @@ Connection.prototype._removeSubscribeDid = function(did) {
     delete this._subscribedDids[did];
 };
 
+Connection.prototype._subscribeDevice = function(did) {
+    var json = {
+        cmd: "subscribe_req",
+        data: [{ did: did }]
+    };
+    this._sendJson(json);
+};
+
 Connection.prototype._subscribeDevices = function() {
     var reqData = [];
     for (var key in this._subscribedDids) {
@@ -1159,7 +1167,7 @@ GizwitsJS.prototype._connect = function(device) {
         conn._connectWS();
         this._connections[wsInfo] = conn;
     } else {
-        conn._subscribeDevices();
+        conn._subscribeDevice(device.did);
     }
 }
 
