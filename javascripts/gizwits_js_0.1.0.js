@@ -29,6 +29,7 @@ var ERROR_CODE = {
     GIZ_SDK_DEVICE_DID_INVALID: 8024,
     GIZ_SDK_DEVICE_NOT_CENTERCONTROL: 8028,
     GIZ_SDK_BIND_DEVICE_FAILED: 8039,
+    GIZ_SDK_UNBIND_DEVICE_FAILED: 8040,
     GIZ_SDK_HTTP_REQUEST_FAILED: 8099,
 
     GIZ_SDK_WEB_SOCKET_CLOSED: 8900,
@@ -69,6 +70,7 @@ function GizwitsJS(params) {
     this.onBindDevice = undefined;
     this.onEventNotify = undefined;
     this.onReceiveData = undefined;
+    this.onUnBindDevice = undefined;
     this.onSetDeviceInfo = undefined;
     this.onGetDeviceList = undefined;
     this.onDiscoverDevices = undefined;
@@ -548,21 +550,21 @@ GizwitsJS.prototype.removeSubDevice = function(params) {
  */
 GizwitsJS.prototype.bindDevice = function(params) {
     if (!params) {
-        this._sendError(this.onUpdateSubDevices,
+        this._sendError(this.onBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
             "Invaild params " + params);
         return;
     }
 
     if (!params.device) {
-        this._sendError(this.onUpdateSubDevices,
+        this._sendError(this.onBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
             "Invaild params.device " + params.device);
         return;
     }
 
     if (!params.bindInfo) {
-        this._sendError(this.onUpdateSubDevices,
+        this._sendError(this.onBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
             "Invaild params.bindInfo " + params.bindInfo);
         return;
@@ -573,10 +575,52 @@ GizwitsJS.prototype.bindDevice = function(params) {
     } else if (params.bindInfo.device_bind_url) {
         this._bindDeviceCustom(params.device.mac, params.device.productKey, params.bindInfo.device_bind_url);
     } else {
-        this._sendError(this.onUpdateSubDevices,
+        this._sendError(this.onBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
             "Please special valid product_secret or device_bind_url in bindInfo when calling bindDevice.");
     }
+}
+
+/**
+ * 指定指定设备标识码对应的已绑定设备
+ *
+ * @param {Object} params 指定参数对象({ did: "xxx" })
+ * @see 成功回调接口 onUnBindDevice(ret, err) 成功ret非空失败err非空
+ */
+GizwitsJS.prototype.unBindDevice = function(params) {
+    if (!params) {
+        this._sendError(this.onUnBindDevice,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params " + params);
+        return;
+    }
+
+    if (!params.did) {
+        this._sendError(this.onUnBindDevice,
+            ERROR_CODE.GIZ_SDK_PARAM_INVALID,
+            "Invaild params.did " + params.did);
+        return;
+    }
+
+    if (!this._boundDevices) {
+        this._sendError(this.onUnBindDevice,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
+        return;
+    }
+
+    //找到指定设备标识码对应的设备对象
+    var device = this._boundDevices[params.did];
+    if (!device) {
+        this._sendError(this.onUnBindDevice,
+            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
+            arguments.callee.name + ": invaild did",
+            params.did);
+        return;
+    }
+
+    this._unBindDevice(device.did);
 }
 
 /**
@@ -623,6 +667,43 @@ GizwitsJS.prototype.setDeviceInfo = function(params) {
 //=========================================================
 // http functions
 //=========================================================
+GizwitsJS.prototype._unBindDevice = function(did) {
+    var gizJS = this;
+    var url = "https://{0}/app/bindings".format(gizJS._apiHost);
+    var data = JSON.stringify({ devices: [{ did: did }] });
+
+    $.ajax(url, {
+            type: "DELETE",
+            contentType: "application/json",
+            headers: {
+                "X-Gizwits-Application-Id": gizJS._appID,
+                "X-Gizwits-User-token": gizJS._userToken
+            },
+            dataType: "json",
+            data: data
+        })
+        .done(function(result) {
+            if (result.success && result.success[0]) {
+                gizJS.onUnBindDevice({ did: did });
+                if (DEV_TYPE_CENTER_CONTROL === gizJS._boundDevices[did].type) {
+                    delete gizJS.subDevices[did]; //删除中控子设备缓存
+                }
+                delete gizJS._boundDevices[did]; //删除设备缓存
+                gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
+            } else {
+                gizJS._sendError(gizJS.onUnBindDevice,
+                    ERROR_CODE.GIZ_SDK_UNBIND_DEVICE_FAILED,
+                    "unbindDevice failed: " + JSON.stringify(result));
+            }
+        })
+        .fail(function(evt) {
+            gizJS._sendError(gizJS.onUnBindDevice,
+                ERROR_CODE.GIZ_SDK_UNBIND_DEVICE_FAILED,
+                "unbind device error, status:" + evt.status + ", responseText:" + evt.responseText,
+                did);
+        });
+}
+
 GizwitsJS.prototype._setDeviceInfo = function(did, alias, remark) {
     var gizJS = this;
     var isChanged = false;
@@ -667,9 +748,9 @@ GizwitsJS.prototype._setDeviceInfo = function(did, alias, remark) {
             }
         })
         .fail(function(evt) {
-            gizJS._sendError(this.onSetDeviceInfo,
+            gizJS._sendError(gizJS.onSetDeviceInfo,
                 ERROR_CODE.GIZ_SDK_SET_DEVICE_INFO_ERROR,
-                "set device info error: " + evt.responseText,
+                "set device info error, status:" + evt.status + ", responseText:" + evt.responseText,
                 did);
         });
 }
@@ -705,15 +786,15 @@ GizwitsJS.prototype._bindDeviceByMAC = function(mac, productKey, productSecret) 
                 }
                 gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
             } else {
-                gizJS._sendError(this.onBindDevice,
+                gizJS._sendError(gizJS.onBindDevice,
                     ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
                     "bindDevice response invaild result: " + JSON.stringify(result));
             }
         })
         .fail(function(evt) {
-            gizJS._sendError(this.onBindDevice,
+            gizJS._sendError(gizJS.onBindDevice,
                 ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
-                "bindDevice error: " + evt.responseText);
+                "bindDevice error, status:" + evt.status + ", responseText:" + evt.responseText);
         });
 }
 
@@ -761,16 +842,16 @@ GizwitsJS.prototype._bindDeviceCustom = function(mac, productKey, customURL) {
                     //获取一次绑定设备列表同步绑定信息
                     gizJS._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
                 } else {
-                    gizJS._sendError(this.onBindDevice,
+                    gizJS._sendError(gizJS.onBindDevice,
                         ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
                         "bindDevice response invaild result: " + JSON.stringify(result));
                 }
             }
         })
         .fail(function(evt) {
-            gizJS._sendError(this.onBindDevice,
+            gizJS._sendError(gizJS.onBindDevice,
                 ERROR_CODE.GIZ_SDK_BIND_DEVICE_FAILED,
-                "bindDevice error: " + evt.responseText);
+                "bindDevice error, status:" + evt.status + ", responseText:" + evt.responseText);
         });
 }
 
@@ -795,9 +876,9 @@ GizwitsJS.prototype._getUserToken = function() {
             gizJS._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
         })
         .fail(function(evt) {
-            gizJS._sendError(this.onDiscoverDevices,
+            gizJS._sendError(gizJS.onDiscoverDevices,
                 ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED,
-                "get user token failed: " + evt.responseText);
+                "get user token failed, status:" + evt.status + ", responseText:" + evt.responseText);
         });
 };
 
@@ -827,9 +908,9 @@ GizwitsJS.prototype._getBoundDevices = function(limit, skip) {
         })
         .fail(function(evt) {
             gizJS._boundDevices = {};
-            gizJS._sendError(this.onDiscoverDevices,
+            gizJS._sendError(gizJS.onDiscoverDevices,
                 ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED,
-                "getBoundDevices error: " + evt.responseText);
+                "getBoundDevices error, status:" + evt.status + ", responseText:" + evt.responseText);
         });
 };
 
@@ -1106,12 +1187,12 @@ GizwitsJS.prototype._onDiscoverDevices = function(callback) {
                         "is_bind": false,
                         "did": device.did,
                         "mac": device.mac,
-                        "remark": device.remark,
-                        "alias": device.dev_alias,
+                        "remark": "",
+                        "alias": "",
                         "is_subscribe": false,
                         "is_online": device.is_online,
                         "product_key": device.product_key,
-                        "type": this._getDevTypeByStr(device.type)
+                        "type": this._getDevTypeByStr(DEV_TYPE_SUB)
                     };
                 }
             }
