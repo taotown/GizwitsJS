@@ -969,7 +969,7 @@ Connection.prototype._onWSMessage = function(evt) {
             }
             for (var j = failedDids.length - 1; j >= 0; j--) {
                 this._removeSubscribeDid(failedDids[j].did);
-                this._callbackObj._sendError(this.callback.onSubscribeDevice,
+                this._callbackObj._sendError(this._callbackObj.onSubscribeDevice,
                     ERROR_CODE.GIZ_SDK_SUBSCRIBE_FAILED,
                     "subscribe device failed, please try again.",
                     failedDids[j].did);
