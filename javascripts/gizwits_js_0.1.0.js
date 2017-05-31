@@ -207,22 +207,27 @@ GizwitsJS.prototype.read = function(params) {
         return;
     }
 
-    //往Websocket连接发送数据点数据读请求
-    if (params.attrs) {
-        this._sendJson(device, {
-            cmd: "c2s_read",
-            data: {
-                did: params.did,
-                names: params.attrs
-            }
-        });
+    //由于中控设备不支持0x90 02查询状态,故在WebsocketAPI兼容0x93SN02之前采用GET /app/devdata/{did}/latest间接实现
+    if (DEV_TYPE_CENTER_CONTROL === device.type && device.is_online) {
+        this._getDeviceLatestData(device.did);
     } else {
-        this._sendJson(device, {
-            cmd: "c2s_read",
-            data: {
-                did: params.did
-            }
-        });
+        //往Websocket连接发送数据点数据读请求
+        if (params.attrs) {
+            this._sendJson(device, {
+                cmd: "c2s_read",
+                data: {
+                    did: params.did,
+                    names: params.attrs
+                }
+            });
+        } else {
+            this._sendJson(device, {
+                cmd: "c2s_read",
+                data: {
+                    did: params.did
+                }
+            });
+        }
     }
 };
 
@@ -667,6 +672,29 @@ GizwitsJS.prototype.setDeviceInfo = function(params) {
 //=========================================================
 // http functions
 //=========================================================
+GizwitsJS.prototype._getDeviceLatestData = function(did) {
+    var gizJS = this;
+    var url = "https://{0}/app/devdata/{1}/latest".format(gizJS._apiHost, did);
+
+    $.ajax(url, {
+            type: "GET",
+            contentType: "application/json",
+            headers: {
+                "X-Gizwits-Application-Id": gizJS._appID,
+                "X-Gizwits-User-token": gizJS._userToken
+            },
+            dataType: "json"
+        })
+        .done(function(result) {
+            if (result.did && result.attr) {
+                gizJS.onReceiveData({
+                    did: did,
+                    attrs: result.attr
+                });
+            }
+        });
+}
+
 GizwitsJS.prototype._unBindDevice = function(did) {
     var gizJS = this;
     var url = "https://{0}/app/bindings".format(gizJS._apiHost);
@@ -707,7 +735,7 @@ GizwitsJS.prototype._unBindDevice = function(did) {
 GizwitsJS.prototype._setDeviceInfo = function(did, alias, remark) {
     var gizJS = this;
     var isChanged = false;
-    var url = "https://{0}/app/bindings/".format(gizJS._apiHost) + did;
+    var url = "https://{0}/app/bindings/{1}".format(gizJS._apiHost, did);
     var dataObj = {};
 
     if (remark) {
