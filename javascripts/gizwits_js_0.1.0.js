@@ -31,6 +31,7 @@ var ERROR_CODE = {
     GIZ_SDK_BIND_DEVICE_FAILED: 8039,
     GIZ_SDK_UNBIND_DEVICE_FAILED: 8040,
     GIZ_SDK_HTTP_REQUEST_FAILED: 8099,
+    GIZ_SDK_SUBDEVICE_ADD_FAILED: 8140,
 
     GIZ_SDK_WEB_SOCKET_CLOSED: 8900,
     GIZ_SDK_SUBSCRIBE_FAILED: 8901,
@@ -137,21 +138,21 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
     if (!params) {
         this._sendError(this.onSubscribeDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params " + params);
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
         this._sendError(this.onSubscribeDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params.did " + params.did);
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
     if (!this._boundDevices) {
         this._sendError(this.onSubscribeDevice,
             GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + "Invaild did", params.did);
+            arguments.callee.name + ": invaild did", params.did);
         return;
     }
 
@@ -160,7 +161,7 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
     if (!device) {
         this._sendError(this.onSubscribeDevice,
             ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            "Invaild did", params.did);
+            arguments.callee.name + ": invaild did", params.did);
         return;
     }
 
@@ -557,21 +558,21 @@ GizwitsJS.prototype.bindDevice = function(params) {
     if (!params) {
         this._sendError(this.onBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params " + params);
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.device) {
         this._sendError(this.onBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params.device " + params.device);
+            arguments.callee.name + ": invaild params.device " + params.device);
         return;
     }
 
     if (!params.bindInfo) {
         this._sendError(this.onBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params.bindInfo " + params.bindInfo);
+            arguments.callee.name + ": invaild params.bindInfo " + params.bindInfo);
         return;
     }
 
@@ -596,14 +597,14 @@ GizwitsJS.prototype.unBindDevice = function(params) {
     if (!params) {
         this._sendError(this.onUnBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params " + params);
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
         this._sendError(this.onUnBindDevice,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params.did " + params.did);
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
@@ -638,21 +639,21 @@ GizwitsJS.prototype.setDeviceInfo = function(params) {
     if (!params) {
         this._sendError(this.onSetDeviceInfo,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params " + params);
+            arguments.callee.name + ": invaild params " + params);
         return;
     }
 
     if (!params.did) {
         this._sendError(this.onSetDeviceInfo,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params.did " + params.did);
+            arguments.callee.name + ": invaild params.did " + params.did);
         return;
     }
 
     if (null == params.remark && null == params.alias) {
         this._sendError(this.onSetDeviceInfo,
             ERROR_CODE.GIZ_SDK_PARAM_INVALID,
-            "Invaild params.remark " + params.remark + " and params.alias " + params.alias);
+            arguments.callee.name + ": invaild params.remark " + params.remark + " and params.alias " + params.alias);
         return;
     }
 
@@ -1038,17 +1039,20 @@ Connection.prototype._onWSMessage = function(evt) {
 
                 if (P0_CMD_REPORT_SUBDEVICE_STATUS === action) {
                     this._callbackObj._processSubdeviceOnlineReport(did, actionP0);
-                    this._callbackObj._onUpdateSubDevices(did);
+                    this._callbackObj._onUpdateSubDevices(did, true);
                 } else if (P0_CMD_GET_SUBDEVICE_LIST_RESP === action || P0_CMD_REPORT_SUBDEVICE_LIST === action) {
-                    if (this._callbackObj.onUpdateSubDevices) {
-                        this._callbackObj._processSubdevicesReport(did, actionP0);
-                        this._callbackObj._onUpdateSubDevices(did);
-                    }
+                    this._callbackObj._processSubdevicesReport(did, actionP0);
+                    this._callbackObj._onUpdateSubDevices(did, true);
                 } else if (P0_CMD_ADD_SUBDEVICE_RESP === action) {
                     if (actionP0[0]) {
-                        console.log("center control device " + did + " add subDevice failed");
+                        if (this._callbackObj.onUpdateSubDevices) {
+                            this._callbackObj._sendError(this._callbackObj.onUpdateSubDevices,
+                                GIZ_SDK_SUBDEVICE_ADD_FAILED,
+                                "add subDevice for center control device failed",
+                                did);
+                        }
                     } else {
-                        console.log("center control device " + did + " add subDevice success");
+                        this._callbackObj._onUpdateSubDevices(did, false);
                     }
                 } else if (P0_CMD_DELETE_SUBDEVICE_RESP === action) {
                     if (actionP0[0]) {
@@ -1394,7 +1398,7 @@ GizwitsJS.prototype._processSubdeviceOnlineReport = function(did, raw) {
     }
 }
 
-GizwitsJS.prototype._onUpdateSubDevices = function(did) {
+GizwitsJS.prototype._onUpdateSubDevices = function(did, updateBoundDevices) {
     if (!this.onUpdateSubDevices) {
         return;
     }
@@ -1415,7 +1419,9 @@ GizwitsJS.prototype._onUpdateSubDevices = function(did) {
     });
 
     //获取一次绑定设备列表同步绑定信息
-    this._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
+    if (updateBoundDevices) {
+        this._getBoundDevices(GET_BOUND_DEV_ONE_STEP_LIMIT, 0);
+    }
 }
 
 /**
