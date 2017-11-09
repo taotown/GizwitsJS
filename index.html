@@ -41,6 +41,29 @@
         gGizwitsJS.onSubscribeDevice = onSubscribeDevice;
         gGizwitsJS.onUpdateSubDevices = onUpdateSubDevices;
         gGizwitsJS.onDeviceOnlineStatusChanged = onDeviceOnlineStatusChanged;
+        gGizwitsJS.onGetGroupList = onGetGroupList;
+        gGizwitsJS.onUpdateGroupList = onUpdateGroupList;
+        gGizwitsJS.onEditGroupName = onEditGroupName;
+        gGizwitsJS.onUpdateGroupDeviceList = onUpdateGroupDeviceList;
+        gGizwitsJS.onGroupWrite = onGroupWrite;
+        gGizwitsJS.onGetSceneList = onGetSceneList;
+        gGizwitsJS.onUpdateSceneList = onUpdateSceneList;
+        gGizwitsJS.onEditSceneInfo = onEditSceneInfo;
+        gGizwitsJS.onUpdateSceneStatus = onUpdateSceneStatus;
+        gGizwitsJS.onExecuteScene = onExecuteScene;
+
+        gGizwitsJS.onGetBindingUsers = onGetBindingUsers;
+        gGizwitsJS.onUnbindUser = onUnbindUser;
+        gGizwitsJS.onGetDeviceSharingInfos = onGetDeviceSharingInfos;
+        gGizwitsJS.onSharingDevice = onSharingDevice;
+        gGizwitsJS.onRevokeDeviceSharing = onRevokeDeviceSharing;
+        gGizwitsJS.onAcceptDeviceSharing = onAcceptDeviceSharing;
+        gGizwitsJS.onCheckDeviceSharingInfoByQRCode = onCheckDeviceSharingInfoByQRCode;
+        gGizwitsJS.onAcceptDeviceSharingByQRCode = onAcceptDeviceSharingByQRCode;
+        gGizwitsJS.onModifySharingInfo = onModifySharingInfo;
+
+        gGizwitsJS.onQueryMessageList = onQueryMessageList;
+        gGizwitsJS.onMarkMessageStatus = onMarkMessageStatus;
 
         $.cookie('apiHost', apiHost);
         $.cookie('gizwitsAppID', gizwitsAppID);
@@ -173,6 +196,256 @@
         showScreen("已发送修改设备信息指令: params=" + params);
     }
 
+    function getGroupCache() {
+        gGizwitsJS.getGroupList();
+        showScreen("已发送获取分组缓存指令");
+    }
+
+    function addGroup() {
+        var params = $('#addGroupParam').val();
+        if (params) {
+            gGizwitsJS.addGroup(JSON.parse(params));
+        } else {
+            gGizwitsJS.addGroup({});
+        }
+        showScreen("已发送添加分组指令: params=" + params);
+    }
+
+    function deleteGroup() {
+        var params = $('#deleteGroupParam').val();
+        if (params) {
+            gGizwitsJS.deleteGroup(JSON.parse(params));
+        } else {
+            gGizwitsJS.deleteGroup({});
+        }
+        showScreen("已发送删除分组指令: params=" + params);
+    }
+
+    function updateGroup() {
+        gGizwitsJS.updateGroupList();
+        showScreen("已发送获取分组列表指令");
+    }
+
+    function editGroup() {
+        var params = $('#editGroupParam').val();
+        if (params) {
+            gGizwitsJS.editGroupInfo(JSON.parse(params));
+        } else {
+            gGizwitsJS.editGroupInfo({});
+        }
+        showScreen("已发送编辑分组名指令: params=" + params);
+    }
+    
+    function addGroupDevices() {
+        var params = $('#addGroupDeviceParam').val();
+        if (params) {
+            gGizwitsJS.addGroupDevices(JSON.parse(params));
+        } else {
+            gGizwitsJS.addGroupDevices({});
+        }
+        showScreen("已发送添加分组设备指令: params=" + params);
+    }
+
+    function deleteGroupDevices() {
+        var params = $('#deleteGroupDeviceParam').val();
+        if (params) {
+            gGizwitsJS.deleteGroupDevices(JSON.parse(params));
+        } else {
+            gGizwitsJS.deleteGroupDevices({});
+        }
+        showScreen("已发送删除分组设备指令: params=" + params);
+    }
+
+    function updateGroupDevices() {
+        var params = $('#updateGroupDeviceParam').val();
+        if (params) {
+            gGizwitsJS.updateGroupDevices(JSON.parse(params));
+        } else {
+            gGizwitsJS.updateGroupDevices({});
+        }
+        showScreen("已发送获取分组设备指令: params=" + params);
+    }
+
+    function writeGroup() {
+        var params = $('#writeGroupParam').val();
+        if (params) {
+            gGizwitsJS.groupWrite(JSON.parse(params));
+        } else {
+            gGizwitsJS.groupWrite({});
+        }
+        showScreen("已发送控制分组指令: params=" + params);
+    }
+    
+    function getSceneCache() {
+        gGizwitsJS.getScenenList();
+        showScreen("已发送场景缓存指令");
+    }
+
+    function addScene() {
+        var params = $('#addSceneParam').val();
+        if (params) {
+            gGizwitsJS.addScene(JSON.parse(params));
+        } else {
+            gGizwitsJS.addScene({});
+        }
+        showScreen("已发送添加场景指令: params=" + params);
+    }
+
+    function editSceneInfo() {
+        var params = $('#editSceneInfoParam').val();
+        if (params) {
+            gGizwitsJS.editSceneInfo(JSON.parse(params));
+        } else {
+            gGizwitsJS.editSceneInfo({});
+        }
+        showScreen("已发送修改场景信息指令: params=" + params);
+    }
+
+    function deleteScene() {
+        var params = $('#deleteSceneParam').val();
+        if (params) {
+            gGizwitsJS.deleteScene(JSON.parse(params));
+        } else {
+            gGizwitsJS.deleteScene({});
+        }
+        showScreen("已发送删除场景指令: params=" + params);
+    }
+    
+    function updateScene() {
+        gGizwitsJS.updateScenes();
+        showScreen("已发送获取场景列表指令");
+    }
+    
+    function updateSceneStatus() {
+        var params = $('#updateSceneStatusParam').val();
+        if (params) {
+            gGizwitsJS.updateSceneStatus(JSON.parse(params));
+        } else {
+            gGizwitsJS.updateSceneStatus({});
+        }
+        showScreen("已发送场景状态查询指令: params=" + params);
+    }
+    
+    function executeScene() {
+        var params = $('#executeSceneParam').val();
+        if (params) {
+            gGizwitsJS.executeScene(JSON.parse(params));
+        } else {
+            gGizwitsJS.executeScene({});
+        }
+        showScreen("已发送场景执行指令: params=" + params);
+    }
+
+    function getBindingUsers() {
+        var params = $('#getBindingUsersParam').val();
+        if (params) {
+            gGizwitsJS.getBindingUsers(JSON.parse(params));
+        } else {
+            gGizwitsJS.getBindingUsers({});
+        }
+        showScreen("已发送查询设备已绑定用户指令: params=" + params);
+    }
+
+    function unbindUser() {
+        var params = $('#unbindUserParam').val();
+        if (params) {
+            gGizwitsJS.unbindUser(JSON.parse(params));
+        } else {
+            gGizwitsJS.unbindUser({});
+        }
+        showScreen("已发送解绑其他用户指令: params=" + params);
+    }
+
+    function getDeviceSharingInfos() {
+        var params = $('#getDeviceSharingInfosParam').val();
+        if (params) {
+            gGizwitsJS.getDeviceSharingInfos(JSON.parse(params));
+        } else {
+            gGizwitsJS.getDeviceSharingInfos({});
+        }
+        showScreen("已发送获取设备分享邀请列表指令: params=" + params);
+    }
+
+    function sharingDevice() {
+        var params = $('#sharingDeviceParam').val();
+        if (params) {
+            gGizwitsJS.sharingDevice(JSON.parse(params));
+        } else {
+            gGizwitsJS.sharingDevice({});
+        }
+        showScreen("已发送创建设备分享邀请指令: params=" + params);
+    }
+
+    function revokeDeviceSharing() {
+        var params = $('#revokeDeviceSharingParam').val();
+        if (params) {
+            gGizwitsJS.revokeDeviceSharing(JSON.parse(params));
+        } else {
+            gGizwitsJS.revokeDeviceSharing({});
+        }
+        showScreen("已发送撤回设备分享指令: params=" + params);
+    }
+
+    function acceptDeviceSharing() {
+        var params = $('#acceptDeviceSharingParam').val();
+        if (params) {
+            gGizwitsJS.acceptDeviceSharing(JSON.parse(params));
+        } else {
+            gGizwitsJS.acceptDeviceSharing({});
+        }
+        showScreen("已发送接受或拒绝设备分享邀请指令: params=" + params);
+    }
+
+    function checkDeviceSharingInfoByQRCode() {
+        var params = $('#checkDeviceSharingInfoByQRCodeParam').val();
+        if (params) {
+            gGizwitsJS.checkDeviceSharingInfoByQRCode(JSON.parse(params));
+        } else {
+            gGizwitsJS.checkDeviceSharingInfoByQRCode({});
+        }
+        showScreen("已发送查看二维码邀请信息指令: params=" + params);
+    }
+
+    function acceptDeviceSharingByQRCode() {
+        var params = $('#acceptDeviceSharingByQRCodeParam').val();
+        if (params) {
+            gGizwitsJS.acceptDeviceSharingByQRCode(JSON.parse(params));
+        } else {
+            gGizwitsJS.acceptDeviceSharingByQRCode({});
+        }
+        showScreen("已发送扫码接受分享邀请指令: params=" + params);
+    }
+
+    function modifySharingInfo() {
+        var params = $('#modifySharingInfoParam').val();
+        if (params) {
+            gGizwitsJS.modifySharingInfo(JSON.parse(params));
+        } else {
+            gGizwitsJS.modifySharingInfo({});
+        }
+        showScreen("已发送修改分享备注信息指令: params=" + params);
+    }
+
+    function queryMessageList() {
+        var params = $('#queryMessageListParam').val();
+        if (params) {
+            gGizwitsJS.queryMessageList(JSON.parse(params));
+        } else {
+            gGizwitsJS.queryMessageList({});
+        }
+        showScreen("已发送查询消息列表指令: params=" + params);
+    }
+
+    function markMessageStatus() {
+        var params = $('#markMessageStatusParam').val();
+        if (params) {
+            gGizwitsJS.markMessageStatus(JSON.parse(params));
+        } else {
+            gGizwitsJS.markMessageStatus({});
+        }
+        showScreen("已发送标记或删除消息指令: params=" + params);
+    }
+
     function clearLog() {
         $('#log').html("");
     }
@@ -297,6 +570,167 @@
         showError("onEventNotify:" + JSON.stringify(ret));
     }
 
+    function onGetGroupList(ret) {
+        showScreen("分组缓存：" + JSON.stringify(ret));
+    }
+
+    function onUpdateGroupList(ret, err) {
+        if (ret) {
+            showScreen("更新分组：" + JSON.stringify(ret));
+        } else {
+            showError("更新操作失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onEditGroupName(ret, err) {
+        if (ret) {
+            showScreen("编辑分组名成功：" + JSON.stringify(ret));
+        } else {
+            showError("编辑分组名失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onUpdateGroupDeviceList(ret, err) {
+        if (ret) {
+            showScreen("更新分组设备列表成功：" + JSON.stringify(ret));
+        } else {
+            showError("更新分组设备列表失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onGroupWrite(ret, err) {
+        if (ret) {
+            showScreen("控制分组成功：" + JSON.stringify(ret));
+        } else {
+            showError("控制分组失败：" + JSON.stringify(err));
+        }
+    }
+    
+    function onGetSceneList(ret, err) {
+        showScreen("场景缓存：" + JSON.stringify(ret));
+    }
+    
+    function onUpdateSceneList(ret, err) {
+        if (ret) {
+            showScreen("更新场景列表成功：" + JSON.stringify(ret));
+        } else {
+            showError("更新场景列表失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onEditSceneInfo(ret, err) {
+        if (ret) {
+            showScreen("更新场景信息成功：" + JSON.stringify(ret));
+        } else {
+            showError("更新场景信息失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onUpdateSceneStatus(ret, err) {
+        if (ret) {
+            showScreen("更新场景状态成功：" + JSON.stringify(ret));
+        } else {
+            showError("更新场景状态失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onExecuteScene(ret, err) {
+        if (ret) {
+            showScreen("执行场景成功：" + JSON.stringify(ret));
+        } else {
+            showError("执行场景失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onGetBindingUsers(ret, err) {
+        if (ret) {
+            showScreen("获取绑定用户成功：" + JSON.stringify(ret));
+        } else {
+            showError("获取绑定用户失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onUnbindUser(ret, err) {
+        if (ret) {
+            showScreen("分享解绑用户成功：" + JSON.stringify(ret));
+        } else {
+            showError("分享解绑用户失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onGetDeviceSharingInfos(ret, err) {
+        if (ret) {
+            showScreen("获取设备分享信息成功：" + JSON.stringify(ret));
+        } else {
+            showError("获取设备分享信息失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onSharingDevice(ret, err) {
+        if (ret) {
+            showScreen("分享成功：" + JSON.stringify(ret));
+        } else {
+            showError("分享失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onRevokeDeviceSharing(ret, err) {
+        if (ret) {
+            showScreen("撤销分享成功：" + JSON.stringify(ret));
+        } else {
+            showError("撤销分享失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onAcceptDeviceSharing(ret, err) {
+        if (ret) {
+            showScreen("接受或拒绝分享成功：" + JSON.stringify(ret));
+        } else {
+            showError("接受或拒绝分享失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onCheckDeviceSharingInfoByQRCode(ret, err) {
+        if (ret) {
+            showScreen("通过二维码获取分享信息成功：" + JSON.stringify(ret));
+        } else {
+            showError("通过二维码获取分享信息失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onAcceptDeviceSharingByQRCode(ret, err) {
+        if (ret) {
+            showScreen("通过二维码接受分享成功：" + JSON.stringify(ret));
+        } else {
+            showError("通过二维码接受分享失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onModifySharingInfo(ret, err) {
+        if (ret) {
+            showScreen("修改分享信息成功：" + JSON.stringify(ret));
+        } else {
+            showError("修改分享信息失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onQueryMessageList(ret, err) {
+        if (ret) {
+            showScreen("获取消息列表成功：" + JSON.stringify(ret));
+        } else {
+            showError("获取消息列表失败：" + JSON.stringify(err));
+        }
+    }
+
+    function onMarkMessageStatus(ret, err) {
+        if (ret) {
+            showScreen("标记消息状态成功：" + JSON.stringify(ret));
+        } else {
+            showError("标记消息状态失败：" + JSON.stringify(err));
+        }
+    }
+
+
     //=========================================================
     // inner functions
     //=========================================================
@@ -327,7 +761,7 @@
 <body>
     <h3>Gizwits-Javascript-SDK Example v0.1.0</h3>
     <p>（请使用Chrome、Firefox等支持Websocket功能的浏览器，低版本IE或Firefox存在不兼容的情况）</p>
-    <a href="https://taotown.github.io/GizwitsJS/" target="view_frame">All Releases</a>
+    <a href="https://taotown.github.io/GizwitsJS/" target="view_frame">早期的发布版本</a>
     <hr/>
     <table border="0" cellpadding="0" , cellspacing="0">
         <tr>
@@ -350,7 +784,7 @@
                             <label>GizwitsOpenID:</label>
                         </td>
                         <td align="left" valign="top">
-                            <input type="text" id="gizwitsOpenID" value="A037E0FC-AB7F-4D82-B6B1-DAB5575AA188" size="30" placeholder="wx001" />
+                            <input type="text" id="gizwitsOpenID" value="oYLgn0Zy9APiAxZpVXL6EAlFOVT8" size="30" placeholder="wx001" />
                         </td>
                         <td align="left" valign="top">
                             <label style="font-size: small">机智云OpenID</label>
@@ -361,7 +795,7 @@
                             <label>GizwitsAppID:</label>
                         </td>
                         <td align="left" valign="top">
-                            <input type="text" id="gizwitsAppID" value="ec3cada29ae64f458d87c5f18eb5c882" size="30" placeholder="60d9d45a420b4f539434adb127fe5e5e" />
+                            <input type="text" id="gizwitsAppID" value="cf39b707aed7463c8ebd6f518616f87c" size="30" placeholder="60d9d45a420b4f539434adb127fe5e5e" />
                         </td>
                         <td align="left" valign="top">
                             <label style="font-size: small">机智云平台应用标识</label>
@@ -453,10 +887,213 @@
                 <br/>
                 <textarea rows="5" cols="90" id="deviceForSetting" placeholder='填写待修改的已绑定设备信息params,例如{"did":"xxx","alias":"yyy","remark":"zzz"}'></textarea>
                 <br/>
-                <button id="bindDevice" onclick="setDeviceInfo()">Do it!</button>
+                <button id="deviceSetting" onclick="setDeviceInfo()">Do it!</button>
                 <br/>
                 <p>（修改结果，会在onSetDeviceInfo这个callback函数返回。）</p>
-            </td>
+                <h4>11. 获取分组缓存列表</h4>
+                <br/>
+                <button id="getGroupCache" onclick="getGroupCache()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onGetGroupList这个callback函数返回。）</p>
+                <h4>12. 添加分组</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="addGroupParam" placeholder='填写待添加的分组信息params,例如{"name":"xxx","product_key":"yyy"}'></textarea>
+                <br/>
+                <button id="addGroup" onclick="addGroup()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateGroupList这个callback函数返回。）</p>
+                <h4>13. 删除分组</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="deleteGroupParam" placeholder='填写待删除的分组信息params,例如{"group_id":"xxx"}'></textarea>
+                <br/>
+                <button id="deleteGroup" onclick="deleteGroup()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateGroupList这个callback函数返回。）</p>
+                <h4>14. 获取分组列表</h4>
+                <br/>
+                <button id="updateGroup" onclick="updateGroup()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateGroupList这个callback函数返回。）</p>
+                <h4>15. 编辑分组名</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="editGroupParam" placeholder='填写待编辑的分组信息params,例如{"group_id":"xxx", "group_name":"yyy"}'></textarea>
+                <br/>
+                <button id="groupName" onclick="editGroup()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onEditGroupName这个callback函数返回。）</p>
+                <h4>16. 添加分组设备列表</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="addGroupDeviceParam" placeholder='填写待添加的分组设备params,例如{"group_id":"xxx", "devices":[{"did": yyy}]}'></textarea>
+                <br/>
+                <button id="addGroupDevices" onclick="addGroupDevices()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateGroupDeviceList这个callback函数返回。）</p>
+                <h4>17. 删除分组设备列表</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="deleteGroupDeviceParam" placeholder='填写待删除的分组设备params,例如{"group_id":"xxx", "devices":[{"did": yyy}]}'></textarea>
+                <br/>
+                <button id="deleteGroupDevices" onclick="deleteGroupDevices()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateGroupDeviceList这个callback函数返回。）</p>
+                <h4>18. 更新分组设备列表</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="updateGroupDeviceParam" placeholder='填写待获取的分组设备params,例如{"group_id":"xxx"}'></textarea>
+                <br/>
+                <button id="updateGroupDevices" onclick="updateGroupDevices()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateGroupDeviceList这个callback函数返回。）</p>
+                <h4>19. 控制分组</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="writeGroupParam" placeholder='填写待控制的分组params,例如{"group_id":"xxx", "attrs":{"yyy": zzz}, "raw":"aaa"}'></textarea>
+                <br/>
+                <button id="writeGroup" onclick="writeGroup()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onGroupWrite这个callback函数返回。）</p>
+                <h4>20. 场景缓存</h4>
+                <br/>
+                <button id="getSceneCache" onclick="getSceneCache()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onGetSceneList这个callback函数返回。）</p>
+                <h4>21. 添加场景</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="addSceneParam" placeholder='填写待添加场景的params,例如{"name":"xxx", "remark":"yyy", "tasks":{"task_type": "delay/device/group", "time": 0, "did": "aaa", "group_id": "bbb", "attrs": {}, "raw": "ccc"}}'></textarea>
+                <br/>
+                <button id="addScene" onclick="addScene()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateSceneList这个callback函数返回。）</p>
+                <h4>22. 修改场景信息</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="editSceneInfoParam" placeholder='填写待修改场景信息的params,例如{"scene_id": xxx, "scene_name":"xxx", "remark":"yyy", "tasks":{"task_type": "delay/device/group", "time": 0, "did": "aaa", "group_id": "bbb", "attrs": {}, "raw": "ccc"}}'></textarea>
+                <br/>
+                <button id="editSceneInfo" onclick="editSceneInfo()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onEditSceneInfo这个callback函数返回。）</p>
+                <h4>23. 删除场景</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="deleteSceneParam" placeholder='填写待删除场景的params,例如{"scene_id":"xxx"}'></textarea>
+                <br/>
+                <button id="deleteScene" onclick="deleteScene()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateSceneList这个callback函数返回。）</p>
+                <h4>24. 更新场景</h4>
+                <br/>
+                <button id="updateScene" onclick="updateScene()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateSceneList这个callback函数返回。）</p>
+                <h4>25. 查询场景状态</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="updateSceneStatusParam" placeholder='填写待查询场景的params,例如{"scene_id":"xxx"}'></textarea>
+                <br/>
+                <button id="updateSceneStatus" onclick="updateSceneStatus()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUpdateSceneStatus这个callback函数返回。）</p>
+                <h4>26. 执行场景</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="executeSceneParam" placeholder='填写待执行场景的params,例如{"scene_id":"xxx"}'></textarea>
+                <br/>
+                <button id="executeScene" onclick="executeScene()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onExecuteScene这个callback函数返回。）</p>
+                <h4>27. 查询设备已绑定用户</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="getBindingUsersParam" placeholder='填写待查询设备已绑定用户的params,例如{"did":"xxx"}'></textarea>
+                <br/>
+                <button id="getBindingUsers" onclick="getBindingUsers()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onGetBindingUsers这个callback函数返回。）</p>
+                <h4>28. 解绑其他用户</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="unbindUserParam" placeholder='填写待解绑其他用户的params,例如{"did":"xxx", "uid": "xxx"}'></textarea>
+                <br/>
+                <button id="unbindUser" onclick="unbindUser()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onUnbindUser这个callback函数返回。）</p>
+                <h4>29. 获取设备分享邀请列表</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="getDeviceSharingInfosParam" placeholder='填写待获取设备分享邀请列表的params,例如{"did":"xxx", "type": xxx}'></textarea>
+                <br/>
+                <button id="getDeviceSharingInfos" onclick="getDeviceSharingInfos()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onGetDeviceSharingInfos这个callback函数返回。）</p>
+                <h4>30. 创建设备分享邀请</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="sharingDeviceParam" placeholder='填写待创建设备分享邀请的params,例如{"did":"xxx", "type": xxx, "uid": "xxx", "username": "xxx", "email": "xxx", "phone": "xxx"}'></textarea>
+                <br/>
+                <button id="sharingDevice" onclick="sharingDevice()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onSharingDevice这个callback函数返回。）</p>
+                <h4>31. 撤回设备分享</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="revokeDeviceSharingParam" placeholder='填写待撤回设备分享的params,例如{"id":"xxx"}'></textarea>
+                <br/>
+                <button id="revokeDeviceSharing" onclick="revokeDeviceSharing()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onRevokeDeviceSharing这个callback函数返回。）</p>
+                <h4>32. 接受或拒绝设备分享邀请</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="acceptDeviceSharingParam" placeholder='填写待接受或拒绝设备分享邀请的params,例如{"id":"xxx", "accept": xxx}'></textarea>
+                <br/>
+                <button id="acceptDeviceSharing" onclick="acceptDeviceSharing()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onAcceptDeviceSharing这个callback函数返回。）</p>
+                <h4>33. 查看二维码邀请信息</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="checkDeviceSharingInfoByQRCodeParam" placeholder='填写待查看二维码邀请信息的params,例如{"code":"xxx"}'></textarea>
+                <br/>
+                <button id="checkDeviceSharingInfoByQRCode" onclick="checkDeviceSharingInfoByQRCode()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onCheckDeviceSharingInfoByQRCode这个callback函数返回。）</p>
+                <h4>34. 扫码接受分享邀请</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="acceptDeviceSharingByQRCodeParam" placeholder='填写待扫码接受分享邀请的params,例如{"code":"xxx"}'></textarea>
+                <br/>
+                <button id="acceptDeviceSharingByQRCode" onclick="acceptDeviceSharingByQRCode()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onAcceptDeviceSharingByQRCode这个callback函数返回。）</p>
+                <h4>35. 修改分享备注信息</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="modifySharingInfoParam" placeholder='填写待修改分享备注信息的params,例如{"id":"xxx", "user_alias": "xxx"}'></textarea>
+                <br/>
+                <button id="modifySharingInfo" onclick="modifySharingInfo()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onModifySharingInfo这个callback函数返回。）</p>
+                <h4>36. 查询消息列表</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="queryMessageListParam" placeholder='填写待查询消息列表的params,例如{"type": xxx}'></textarea>
+                <br/>
+                <button id="queryMessageList" onclick="queryMessageList()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onQueryMessageList这个callback函数返回。）</p>
+                <h4>37. 标记或删除消息</h4>
+                <label>params:</label>
+                <br/>
+                <textarea rows="5" cols="90" id="markMessageStatusParam" placeholder='填写待标记或删除消息的params,例如{"id":"xxx", "status": xxx}'></textarea>
+                <br/>
+                <button id="markMessageStatus" onclick="markMessageStatus()">Do it!</button>
+                <br/>
+                <p>（执行结果，会在onMarkMessageStatus这个callback函数返回。）</p>
             <td align="left" valign="top" style="padding: 0 0 0 10px;">
                 <button id="clear" onclick="clearLog();">clear</button>
                 <br/>
