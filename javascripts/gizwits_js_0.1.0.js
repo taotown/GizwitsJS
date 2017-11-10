@@ -32,6 +32,7 @@ var ERROR_CODE = {
     GIZ_SDK_PARAM_INVALID: 8006,
     GIZ_SDK_DEVICE_DID_INVALID: 8024,
     GIZ_SDK_DEVICE_NOT_CENTERCONTROL: 8028,
+    GIZ_SDK_DEVICE_NOT_BIND: 8032,
     GIZ_SDK_BIND_DEVICE_FAILED: 8039,
     GIZ_SDK_UNBIND_DEVICE_FAILED: 8040,
     GIZ_SDK_HTTP_REQUEST_FAILED: 8099,
@@ -182,8 +183,8 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onSubscribeDevice,
-            GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did", params.did);
+            GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -191,8 +192,8 @@ GizwitsJS.prototype.subscribeDevice = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onSubscribeDevice,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did", params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -223,9 +224,8 @@ GizwitsJS.prototype.read = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onReceiveData,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -233,9 +233,8 @@ GizwitsJS.prototype.read = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onReceiveData,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -286,9 +285,8 @@ GizwitsJS.prototype.write = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onReceiveData,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -296,9 +294,8 @@ GizwitsJS.prototype.write = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onReceiveData,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -348,9 +345,8 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
 
     if (!typeof this._boundDevices) {
         this._sendError(this.onUpdateSubDevices,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -358,9 +354,8 @@ GizwitsJS.prototype.updateSubDevices = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onUpdateSubDevices,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -419,9 +414,8 @@ GizwitsJS.prototype.addSubDevice = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onUpdateSubDevices,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -429,9 +423,8 @@ GizwitsJS.prototype.addSubDevice = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onUpdateSubDevices,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -514,9 +507,8 @@ GizwitsJS.prototype.removeSubDevice = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onUpdateSubDevices,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -524,9 +516,8 @@ GizwitsJS.prototype.removeSubDevice = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onUpdateSubDevices,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -643,9 +634,8 @@ GizwitsJS.prototype.unBindDevice = function(params) {
 
     if (!this._boundDevices) {
         this._sendError(this.onUnBindDevice,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -653,9 +643,8 @@ GizwitsJS.prototype.unBindDevice = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onUnBindDevice,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -694,9 +683,8 @@ GizwitsJS.prototype.setDeviceInfo = function(params) {
     var device = this._boundDevices[params.did];
     if (!device) {
         this._sendError(this.onSetDeviceInfo,
-            ERROR_CODE.GIZ_SDK_DEVICE_DID_INVALID,
-            arguments.callee.name + ": invaild did",
-            params.did);
+            ERROR_CODE.GIZ_SDK_DEVICE_NOT_BIND,
+            arguments.callee.name + ": " + params.did + " not exist in bound devices");
         return;
     }
 
@@ -705,7 +693,7 @@ GizwitsJS.prototype.setDeviceInfo = function(params) {
 
 
 GizwitsJS.prototype.getGroupList = function() {
-    this.onGetGroupList({"groups":this._groupList}); //没有did参数
+    this.onGetGroupList({ "groups": this._groupList }); //没有did参数
 };
 
 GizwitsJS.prototype.addGroup = function(params) {
@@ -741,7 +729,7 @@ GizwitsJS.prototype.groupWrite = function(params) {
 };
 
 GizwitsJS.prototype.getScenenList = function() {
-    this.onGetSceneList({"scenes":this._sceneList});
+    this.onGetSceneList({ "scenes": this._sceneList });
 };
 
 GizwitsJS.prototype.addScene = function(params) {
@@ -1089,20 +1077,20 @@ GizwitsJS.prototype._getBoundDevices = function(limit, skip) {
         });
 };
 
-GizwitsJS.prototype._updateGroupList = function () {
+GizwitsJS.prototype._updateGroupList = function() {
     var gizJS = this;
     var url = "https://{0}/app/group".format(gizJS._apiHost);
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             gizJS._groupList = new Array();
             if (result) {
-                for (var i=0; i<result.length; i++) {
+                for (var i = 0; i < result.length; i++) {
                     var groupInfo = result[i];
                     gizJS._groupList[i] = {
                         "group_id": groupInfo.id,
@@ -1112,7 +1100,7 @@ GizwitsJS.prototype._updateGroupList = function () {
                     };
                 }
             }
-            gizJS.onUpdateGroupList({groups: gizJS._groupList}, null);
+            gizJS.onUpdateGroupList({ groups: gizJS._groupList }, null);
         })
         .fail(function(evt) {
             gizJS._groupList = {};
@@ -1122,7 +1110,7 @@ GizwitsJS.prototype._updateGroupList = function () {
         });
 };
 
-GizwitsJS.prototype._addGroup = function (name, pk) {
+GizwitsJS.prototype._addGroup = function(name, pk) {
     var gizJS = this;
     var url = "https://{0}/app/group".format(gizJS._apiHost);
     var data = JSON.stringify({
@@ -1131,12 +1119,12 @@ GizwitsJS.prototype._addGroup = function (name, pk) {
     });
 
     $.ajax(url, {
-        type: "POST",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "POST",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
             gizJS._updateGroupList();
         })
@@ -1147,31 +1135,31 @@ GizwitsJS.prototype._addGroup = function (name, pk) {
         });
 };
 
-GizwitsJS.prototype._deleteGroup = function (gid) {
+GizwitsJS.prototype._deleteGroup = function(gid) {
     var gizJS = this;
     var url = "https://{0}/app/group/{1}".format(gizJS._apiHost, gid);
 
     $.ajax(url, {
-        type: "DELETE",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "DELETE",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             gizJS._updateGroupList();
         })
         .fail(function(evt) {
-        	if (evt.status == 200) {
-        		gizJS._updateGroupList();
-        	} else {
-            	gizJS._sendError(gizJS.onUpdateGroupList,
-                	gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
-                	"onUpdateGroupList error, status:" + evt.status + ", responseText:" + evt.responseText);
-        	}
+            if (evt.status == 200) {
+                gizJS._updateGroupList();
+            } else {
+                gizJS._sendError(gizJS.onUpdateGroupList,
+                    gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
+                    "onUpdateGroupList error, status:" + evt.status + ", responseText:" + evt.responseText);
+            }
         });
 };
 
-GizwitsJS.prototype._editGroupInfo = function (gid, name) {
+GizwitsJS.prototype._editGroupInfo = function(gid, name) {
     var gizJS = this;
     var url = "https://{0}/app/group/{1}".format(gizJS._apiHost, gid);
     var data = JSON.stringify({
@@ -1179,30 +1167,30 @@ GizwitsJS.prototype._editGroupInfo = function (gid, name) {
     });
 
     $.ajax(url, {
-        type: "PUT",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "PUT",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
-            gizJS.onEditGroupName({group_id: gid}, null);
+            gizJS.onEditGroupName({ group_id: gid }, null);
         })
         .fail(function(evt) {
-        	if (evt.status == 200) {
-            	gizJS.onEditGroupName({group_id: gid}, null);
-        	} else {
-            	gizJS.onEditGroupName(null, {
-                	group_id: gid,
-                	error_code: gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
-                	error_message: "onEditGroupName error, status:" + evt.status,
-                	detail_message: "responseText:" + evt.responseText
-            	});
-        	}
+            if (evt.status == 200) {
+                gizJS.onEditGroupName({ group_id: gid }, null);
+            } else {
+                gizJS.onEditGroupName(null, {
+                    group_id: gid,
+                    error_code: gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
+                    error_message: "onEditGroupName error, status:" + evt.status,
+                    detail_message: "responseText:" + evt.responseText
+                });
+            }
         });
 };
 
-GizwitsJS.prototype._addGroupDevices = function (gid, dids) {
+GizwitsJS.prototype._addGroupDevices = function(gid, dids) {
     var gizJS = this;
     var url = "https://{0}/app/group/{1}/devices".format(gizJS._apiHost, gid);
     var data = JSON.stringify({
@@ -1210,20 +1198,20 @@ GizwitsJS.prototype._addGroupDevices = function (gid, dids) {
     });
 
     $.ajax(url, {
-        type: "POST",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "POST",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
-            console.log("result = "+JSON.stringify(result));
+            console.log("result = " + JSON.stringify(result));
             if (result.success.length > 0) {
                 gizJS._updateGroupDevices(gid);
             } else {
                 gizJS.onUpdateGroupDeviceList(null, {
                     group_id: gid,
-                    error_code: gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
+                    error_code: gizJS._getErrorCode(result, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
                     error_message: result.failed,
                     detail_message: result.detail_message
                 });
@@ -1239,7 +1227,7 @@ GizwitsJS.prototype._addGroupDevices = function (gid, dids) {
         });
 };
 
-GizwitsJS.prototype._deleteGroupDevices = function (gid, dids) {
+GizwitsJS.prototype._deleteGroupDevices = function(gid, dids) {
     var gizJS = this;
     var url = "https://{0}/app/group/{1}/devices".format(gizJS._apiHost, gid);
     var data = JSON.stringify({
@@ -1247,12 +1235,12 @@ GizwitsJS.prototype._deleteGroupDevices = function (gid, dids) {
     });
 
     $.ajax(url, {
-        type: "DELETE",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "DELETE",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
             if (result.success.length > 0) {
                 gizJS._updateGroupDevices(gid);
@@ -1274,20 +1262,20 @@ GizwitsJS.prototype._deleteGroupDevices = function (gid, dids) {
         });
 };
 
-GizwitsJS.prototype._updateGroupDevices = function (gid) {
+GizwitsJS.prototype._updateGroupDevices = function(gid) {
     var gizJS = this;
     var url = "https://{0}/app/group/{1}/devices".format(gizJS._apiHost, gid);
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             var groupDevicesList = new Array();
             if (result) {
-                for (var i=0; i<result.length; i++) {
+                for (var i = 0; i < result.length; i++) {
                     var groupInfo = result[i];
                     groupDevicesList[i] = {
                         "did": groupInfo.did,
@@ -1298,7 +1286,7 @@ GizwitsJS.prototype._updateGroupDevices = function (gid) {
                     };
                 }
             }
-            gizJS.onUpdateGroupDeviceList({group_id: gid, devices: groupDevicesList}, null);
+            gizJS.onUpdateGroupDeviceList({ group_id: gid, devices: groupDevicesList }, null);
         })
         .fail(function(evt) {
             gizJS.onUpdateGroupDeviceList(null, {
@@ -1310,7 +1298,7 @@ GizwitsJS.prototype._updateGroupDevices = function (gid) {
         });
 };
 
-GizwitsJS.prototype._groupWrite = function (gid, attrs, raw) {
+GizwitsJS.prototype._groupWrite = function(gid, attrs, raw) {
     var gizJS = this;
     var url = "https://{0}/app/group/{1}/control".format(gizJS._apiHost, gid);
     var data = JSON.stringify({
@@ -1319,15 +1307,15 @@ GizwitsJS.prototype._groupWrite = function (gid, attrs, raw) {
     });
 
     $.ajax(url, {
-        type: "POST",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "POST",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
             if (result.length > 0 && result[0].result === true) {
-                gizJS.onGroupWrite({group_id:gid});
+                gizJS.onGroupWrite({ group_id: gid });
             } else {
                 gizJS.onGroupWrite(null, {
                     group_id: gid,
@@ -1356,12 +1344,12 @@ GizwitsJS.prototype._addScene = function(name, remark, tasks) {
     });
 
     $.ajax(url, {
-        type: "POST",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "POST",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
             gizJS._updateScenes();
         })
@@ -1382,18 +1370,18 @@ GizwitsJS.prototype._editSceneInfo = function(sid, name, remark, tasks) {
     });
 
     $.ajax(url, {
-        type: "PUT",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "PUT",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
-            gizJS.onEditSceneInfo({"scene_id": sid}, null);
+            gizJS.onEditSceneInfo({ "scene_id": sid }, null);
         })
         .fail(function(evt) {
             if (evt.status == 200) {
-                gizJS.onEditSceneInfo({"scene_id": sid}, null);
+                gizJS.onEditSceneInfo({ "scene_id": sid }, null);
             } else {
                 gizJS._sendError(gizJS.onEditSceneInfo,
                     gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
@@ -1407,11 +1395,11 @@ GizwitsJS.prototype._deleteScene = function(sid) {
     var url = "https://{0}/app/scene/{1}".format(gizJS._apiHost, sid);
 
     $.ajax(url, {
-        type: "DELETE",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "DELETE",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             gizJS._updateScenes();
         })
@@ -1431,15 +1419,15 @@ GizwitsJS.prototype._updateScenes = function() {
     var url = "https://{0}/app/scene".format(gizJS._apiHost);
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             gizJS._sceneList = new Array();
             if (result) {
-                for (var i=0; i<result.length; i++) {
+                for (var i = 0; i < result.length; i++) {
                     var sceneInfo = result[i];
                     gizJS._sceneList[i] = {
                         "scene_id": sceneInfo.id,
@@ -1448,7 +1436,7 @@ GizwitsJS.prototype._updateScenes = function() {
                         "remark": sceneInfo.remark
                     };
                 }
-                gizJS.onUpdateSceneList({scenes: gizJS._sceneList});
+                gizJS.onUpdateSceneList({ scenes: gizJS._sceneList });
             } else {
                 gizJS.onUpdateSceneList(null, {
                     error_code: ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED
@@ -1468,16 +1456,16 @@ GizwitsJS.prototype._updateSceneStatus = function(sid) {
     var url = "https://{0}/app/scene/{1}/task".format(gizJS._apiHost, sid);
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             if (result) {
                 gizJS.onUpdateSceneStatus({
-                    scene_id:sid,
-                    status:result.status
+                    scene_id: sid,
+                    status: result.status
                 });
             } else {
                 gizJS.onUpdateSceneStatus(null, {
@@ -1497,24 +1485,24 @@ GizwitsJS.prototype._executeScene = function(sid) {
     var url = "https://{0}/app/scene/{1}/task".format(gizJS._apiHost, sid);
 
     $.ajax(url, {
-        type: "POST",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "POST",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onExecuteScene({"scene_id": sid}, null);
+            gizJS.onExecuteScene({ "scene_id": sid }, null);
             gizJS._updateSceneStatus(sid);
         })
         .fail(function(evt) {
-        	if (evt.status == 200) {
-            	gizJS.onExecuteScene({"scene_id": sid}, null);
-            	gizJS._updateSceneStatus(sid);
-        	} else {
-            	gizJS._sendError(gizJS.onExecuteScene,
-                	gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
-                	"onExecuteScene error, status:" + evt.status + ", responseText:" + evt.responseText);
-        	}
+            if (evt.status == 200) {
+                gizJS.onExecuteScene({ "scene_id": sid }, null);
+                gizJS._updateSceneStatus(sid);
+            } else {
+                gizJS._sendError(gizJS.onExecuteScene,
+                    gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
+                    "onExecuteScene error, status:" + evt.status + ", responseText:" + evt.responseText);
+            }
         });
 };
 
@@ -1523,14 +1511,14 @@ GizwitsJS.prototype._getBindingUsers = function(did) {
     var url = "https://{0}/app/{1}/bindings".format(gizJS._apiHost, did);
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             var bindUsers = new Array();
-            for (var i=0; i<result.length; i++) {
+            for (var i = 0; i < result.length; i++) {
                 var userInfo = result[i];
                 bindUsers[i] = {
                     "uid": userInfo.uid,
@@ -1539,7 +1527,7 @@ GizwitsJS.prototype._getBindingUsers = function(did) {
                     "phone": userInfo.phone
                 };
             }
-            gizJS.onGetBindingUsers({"did": did, "bindUsers": bindUsers}, null);
+            gizJS.onGetBindingUsers({ "did": did, "bindUsers": bindUsers }, null);
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onGetBindingUsers,
@@ -1553,17 +1541,17 @@ GizwitsJS.prototype._unbindUser = function(did, uid) {
     var url = "https://{0}/app/{1}/bindings?uid={2}".format(gizJS._apiHost, did, uid);
 
     $.ajax(url, {
-        type: "DELETE",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "DELETE",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onUnbindUser({"did": did}, null);
+            gizJS.onUnbindUser({ "did": did }, null);
         })
         .fail(function(evt) {
             if (evt.status == 200) {
-                gizJS.onUnbindUser({"did": did}, null);
+                gizJS.onUnbindUser({ "did": did }, null);
             } else {
                 gizJS._sendError(gizJS.onUnbindUser,
                     gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
@@ -1582,14 +1570,14 @@ GizwitsJS.prototype._getDeviceSharingInfos = function(did, type) {
     }
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             var sharing_list = new Array();
-            for (var i=0; i<result.objects.length; i++) {
+            for (var i = 0; i < result.objects.length; i++) {
                 var object = result.objects[i];
                 sharing_list[i] = {
                     "id": object.id,
@@ -1605,7 +1593,7 @@ GizwitsJS.prototype._getDeviceSharingInfos = function(did, type) {
                     "status": object.status
                 };
             }
-            gizJS.onGetDeviceSharingInfos({"did": did, "sharing_list": sharing_list}, null);
+            gizJS.onGetDeviceSharingInfos({ "did": did, "sharing_list": sharing_list }, null);
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onGetDeviceSharingInfos,
@@ -1617,21 +1605,23 @@ GizwitsJS.prototype._getDeviceSharingInfos = function(did, type) {
 GizwitsJS.prototype._sharingDevice = function(did, type, uid, username, email, phone) {
     var gizJS = this;
     var url = "https://{0}/app/sharing".format(gizJS._apiHost);
-    var data = JSON.stringify({"type": type,
-                               "did": did,
-                               "uid": uid,
-                               "username": username,
-                               "email": email,
-                               "phone": phone});
+    var data = JSON.stringify({
+        "type": type,
+        "did": did,
+        "uid": uid,
+        "username": username,
+        "email": email,
+        "phone": phone
+    });
     $.ajax(url, {
-        type: "POST",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json",
-        data: data
-    })
+            type: "POST",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json",
+            data: data
+        })
         .done(function(result) {
-            gizJS.onSharingDevice({"id": result.id, "qr_content": result.qr_content}, null);
+            gizJS.onSharingDevice({ "id": result.id, "qr_content": result.qr_content }, null);
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onSharingDevice,
@@ -1644,13 +1634,13 @@ GizwitsJS.prototype._revokeDeviceSharing = function(id) {
     var gizJS = this;
     var url = "https://{0}/app/sharing/{1}".format(gizJS._apiHost, id);
     $.ajax(url, {
-        type: "DELETE",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "DELETE",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onRevokeDeviceSharing({"id": result.id}, null);
+            gizJS.onRevokeDeviceSharing({ "id": result.id }, null);
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onRevokeDeviceSharing,
@@ -1664,13 +1654,13 @@ GizwitsJS.prototype._acceptDeviceSharing = function(id, accept) {
     var url = "https://{0}/app/sharing/{1}?status={2}".format(gizJS._apiHost, id, accept);
 
     $.ajax(url, {
-        type: "PUT",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "PUT",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onAcceptDeviceSharing({"id": result.id}, null);
+            gizJS.onAcceptDeviceSharing({ "id": result.id }, null);
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onAcceptDeviceSharing,
@@ -1684,16 +1674,18 @@ GizwitsJS.prototype._checkDeviceSharingInfoByQRCode = function(code) {
     var url = "https://{0}/app/sharing/code/{1}".format(gizJS._apiHost, code);
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onCheckDeviceSharingInfoByQRCode({"owner": result.owner,
-                                                    "product_name": result.product_name,
-                                                    "dev_alias": result.dev_alias,
-                                                    "expired_at": result.expired_at}, null);
+            gizJS.onCheckDeviceSharingInfoByQRCode({
+                "owner": result.owner,
+                "product_name": result.product_name,
+                "dev_alias": result.dev_alias,
+                "expired_at": result.expired_at
+            }, null);
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onCheckDeviceSharingInfoByQRCode,
@@ -1707,17 +1699,17 @@ GizwitsJS.prototype._acceptDeviceSharingByQRCode = function(code) {
     var url = "https://{0}/app/sharing/code/{1}".format(gizJS._apiHost, code);
 
     $.ajax(url, {
-        type: "POST",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "POST",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onAcceptDeviceSharingByQRCode({"error_code": 0, "error_message": "GIZ_SDK_SUCCESS"}, null);
+            gizJS.onAcceptDeviceSharingByQRCode({ "error_code": 0, "error_message": "GIZ_SDK_SUCCESS" }, null);
         })
         .fail(function(evt) {
             if (evt.status == 200) {
-                gizJS.onAcceptDeviceSharingByQRCode({"error_code": 0, "error_message": "GIZ_SDK_SUCCESS"}, null);
+                gizJS.onAcceptDeviceSharingByQRCode({ "error_code": 0, "error_message": "GIZ_SDK_SUCCESS" }, null);
             } else {
                 gizJS._sendError(gizJS.onAcceptDeviceSharingByQRCode,
                     gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
@@ -1731,17 +1723,17 @@ GizwitsJS.prototype._modifySharingInfo = function(id, user_alias) {
     var url = "https://{0}/app/sharing/{1}/alias?user_alias={2}".format(gizJS._apiHost, id, user_alias);
 
     $.ajax(url, {
-        type: "PUT",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "PUT",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onModifySharingInfo({"error_code": 0, "error_message": "GIZ_SDK_SUCCESS"}, null);
+            gizJS.onModifySharingInfo({ "error_code": 0, "error_message": "GIZ_SDK_SUCCESS" }, null);
         })
         .fail(function(evt) {
             if (evt.status == 200) {
-                gizJS.onModifySharingInfo({"error_code": 0, "error_message": "GIZ_SDK_SUCCESS"}, null);
+                gizJS.onModifySharingInfo({ "error_code": 0, "error_message": "GIZ_SDK_SUCCESS" }, null);
             } else {
                 gizJS._sendError(gizJS.onModifySharingInfo,
                     gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
@@ -1755,14 +1747,14 @@ GizwitsJS.prototype._queryMessageList = function(type) {
     var url = "https://{0}/app/messages?type={1}&skip=0&limit=100".format(gizJS._apiHost, type);
 
     $.ajax(url, {
-        type: "GET",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "GET",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
             var message_list = new Array();
-            for (var i=0; i<result.objects.length; i++) {
+            for (var i = 0; i < result.objects.length; i++) {
                 var object = result.objects[i];
                 message_list[i] = {
                     "id": object.id,
@@ -1773,7 +1765,7 @@ GizwitsJS.prototype._queryMessageList = function(type) {
                     "updated_at": object.updated_at
                 };
             }
-            gizJS.onQueryMessageList({"message_list": message_list}, null);
+            gizJS.onQueryMessageList({ "message_list": message_list }, null);
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onQueryMessageList,
@@ -1787,17 +1779,17 @@ GizwitsJS.prototype._markMessageStatus = function(id, status) {
     var url = "https://{0}/app/messages/{1}?status={2}".format(gizJS._apiHost, id, status);
 
     $.ajax(url, {
-        type: "PUT",
-        contentType: "application/json",
-        headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
-        dataType: "json"
-    })
+            type: "PUT",
+            contentType: "application/json",
+            headers: { "X-Gizwits-Application-Id": gizJS._appID, "X-Gizwits-User-token": gizJS._userToken },
+            dataType: "json"
+        })
         .done(function(result) {
-            gizJS.onMarkMessageStatus({"error_code": 0, "error_message": "GIZ_SDK_SUCCESS"}, null);
+            gizJS.onMarkMessageStatus({ "error_code": 0, "error_message": "GIZ_SDK_SUCCESS" }, null);
         })
         .fail(function(evt) {
             if (evt.status == 200) {
-                gizJS.onMarkMessageStatus({"error_code": 0, "error_message": "GIZ_SDK_SUCCESS"}, null);
+                gizJS.onMarkMessageStatus({ "error_code": 0, "error_message": "GIZ_SDK_SUCCESS" }, null);
             } else {
                 gizJS._sendError(gizJS.onMarkMessageStatus,
                     gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
@@ -1870,39 +1862,39 @@ Connection.prototype._onWSMessage = function(evt) {
         case "s2c_online_status":
             var device = this._callbackObj._boundDevices[res.data.did];
             if (device) {
-            	device.is_online = res.data.online;
+                device.is_online = res.data.online;
 
-            	//先回调设备状态变化
-            	if (this._callbackObj.onDeviceOnlineStatusChanged) {
-            		this._callbackObj.onDeviceOnlineStatusChanged({
-            			did: device.did,
-            			is_online: device.is_online
-            		});
+                //先回调设备状态变化
+                if (this._callbackObj.onDeviceOnlineStatusChanged) {
+                    this._callbackObj.onDeviceOnlineStatusChanged({
+                        did: device.did,
+                        is_online: device.is_online
+                    });
                 }
 
                 //中控变离线,其挂载的未绑定在线子设备也置为离线
                 if (DEV_TYPE_CENTER_CONTROL === device.type && !device.is_online) {
-                	if (this._callbackObj._subDevices[device.did]) {
-                		for (var subDidFromCloud in this._callbackObj._subDevices[device.did]) {
-                			if (!this._callbackObj._boundDevices[subDidFromCloud]) {
-                    			var subDevice = this._callbackObj._subDevices[device.did][subDidFromCloud];
-                    			if (subDevice.is_online != false) {
-                    				subDevice.is_online = false;
-                    				if (this._callbackObj.onDeviceOnlineStatusChanged) {
-                    					this._callbackObj.onDeviceOnlineStatusChanged({
-                    						did: subDevice.did,
-            								is_online: subDevice.is_online
-                    					});
-                    				}
-                    			}
-                    		}
-                    	}
+                    if (this._callbackObj._subDevices[device.did]) {
+                        for (var subDidFromCloud in this._callbackObj._subDevices[device.did]) {
+                            if (!this._callbackObj._boundDevices[subDidFromCloud]) {
+                                var subDevice = this._callbackObj._subDevices[device.did][subDidFromCloud];
+                                if (subDevice.is_online != false) {
+                                    subDevice.is_online = false;
+                                    if (this._callbackObj.onDeviceOnlineStatusChanged) {
+                                        this._callbackObj.onDeviceOnlineStatusChanged({
+                                            did: subDevice.did,
+                                            is_online: subDevice.is_online
+                                        });
+                                    }
+                                }
+                            }
+                        }
                     };
                 }
 
                 //再回调设备列表变化
                 if (this._callbackObj.onDiscoverDevices) {
-                	this._callbackObj._onDiscoverDevices(this._callbackObj.onDiscoverDevices);
+                    this._callbackObj._onDiscoverDevices(this._callbackObj.onDiscoverDevices);
                 }
             }
             break;
