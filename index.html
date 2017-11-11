@@ -37,6 +37,7 @@
         gGizwitsJS.onBindDevice = onBindDevice;
         gGizwitsJS.onEventNotify = onEventNotify;
         gGizwitsJS.onReceiveData = onReceiveData;
+        gGizwitsJS.onUnBindDevice = onUnBindDevice;
         gGizwitsJS.onDiscoverDevices = onDiscoverDevices;
         gGizwitsJS.onSubscribeDevice = onSubscribeDevice;
         gGizwitsJS.onUpdateSubDevices = onUpdateSubDevices;
@@ -184,6 +185,14 @@
             gGizwitsJS.bindDevice({});
         }
         showScreen("已发送绑定(子)设备指令: bindInfo=" + bindInfo + ", device=" + device);
+    }
+
+    function unBindDevice() {
+        var did = $('#unBindDevicesDid').val();
+        gGizwitsJS.unBindDevice({
+            did: did
+        });
+        showScreen("已请求解绑设备" + did);
     }
 
     function setDeviceInfo() {
@@ -470,6 +479,7 @@
                     showScreen("更新设备列表:alias=" + device.alias);
                     showScreen("更新设备列表:remark=" + device.remark);
 
+                    addSelectOption('#unBindDeviceDid', device.did, device.did);
                     addSelectOption('#subscribeDeviceDid', device.did, device.did);
 
                     gBoundDevices[device.did] = device;
@@ -564,6 +574,14 @@
     	} else {
     		showErr(arguments.callee.name, err);
     	}
+    }
+
+    function onUnBindDevice(ret, err) {
+        if (ret) {
+            showScreen("解绑设备:" + ret.did + "成功!");
+        } else {
+            showErr(arguments.callee.name, err);
+        }
     }
 
     function onEventNotify(ret) {
@@ -761,7 +779,7 @@
 <body>
     <h3>Gizwits-Javascript-SDK Example v0.1.0</h3>
     <p>（请使用Chrome、Firefox等支持Websocket功能的浏览器，低版本IE或Firefox存在不兼容的情况）</p>
-    <a href="https://taotown.github.io/GizwitsJS/" target="view_frame">All Releases</a>
+    <a href="https://taotown.github.io/GizwitsJS/" target="view_frame">早期的发布版本</a>
     <hr/>
     <table border="0" cellpadding="0" , cellspacing="0">
         <tr>
@@ -882,6 +900,12 @@
                 <button id="bindDevice" onclick="bindDevice()">Do it!</button>
                 <br/>
                 <p>（若绑定(子)设备成功，会在onBindDevice这个callback函数返回。）</p>
+                <h4>10. 选择一个已存在的(子)设备，解绑一下(子)设备</h4>
+                <label style="display:inline-block;width: 90px">did:</label>
+                <select id="unBindDevicesDid" about="" style="width: 300px;"></select>
+                <button id="unBindDevice" onclick="unBindDevice()">Do it!</button>
+                <br/>
+                <p>（更新结果在onUnBindDevice这个callback函数返回。）</p>
                 <h4>10. 选择一个已绑定设备，修改一下设备信息</h4>
                 <label>params:</label>
                 <br/>
