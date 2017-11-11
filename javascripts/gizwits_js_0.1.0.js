@@ -845,7 +845,9 @@ GizwitsJS.prototype._unBindDevice = function(did) {
             if (result.success && result.success[0]) {
                 gizJS.onUnBindDevice({ did: did });
                 if (DEV_TYPE_CENTER_CONTROL === gizJS._boundDevices[did].type) {
-                    delete gizJS.subDevices[did]; //删除中控子设备缓存
+                    if (gizJS._subDevices[did]) {
+                        delete gizJS._subDevices[did]; //删除中控子设备缓存
+                    }
                 }
                 delete gizJS._boundDevices[did]; //删除设备缓存
                 gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
