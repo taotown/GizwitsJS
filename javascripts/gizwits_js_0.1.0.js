@@ -1857,8 +1857,10 @@ Connection.prototype._onWSMessage = function(evt) {
                 this._removeSubscribeDid(failedDids[j].did);
                 this._callbackObj._sendError(this._callbackObj.onSubscribeDevice,
                     ERROR_CODE.GIZ_SDK_SUBSCRIBE_FAILED,
-                    "subscribe device failed, please try again.",
+                    "subscribe device failed, please try again.(Websocket error_code: "
+                    + failedDids[j].error_code + ", msg: )" + failedDids[j].msg,
                     failedDids[j].did);
+                this._connectWS();
             }
             break;
         case "s2c_online_status":
@@ -1888,6 +1890,7 @@ Connection.prototype._onWSMessage = function(evt) {
                                             is_online: subDevice.is_online
                                         });
                                     }
+                                    this._callbackObj._onUpdateSubDevices(device.did, true);
                                 }
                             }
                         }
@@ -1973,7 +1976,7 @@ Connection.prototype._onWSMessage = function(evt) {
             } else {
                 this._callbackObj._sendError(null,
                     ERROR_CODE.GIZ_SDK_WEB_SOCKET_INVALID,
-                    "ErrorCode " + errorCode + ": " + res.data.msg);
+                    "ErrorCode " + errorCode + ": " + res.data.msg + ", did = " + res.data.did);
             }
             break;
     }
