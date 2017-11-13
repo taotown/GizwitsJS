@@ -1132,7 +1132,7 @@ GizwitsJS.prototype._addGroup = function(name, pk) {
         })
         .fail(function(evt) {
             gizJS._sendError(gizJS.onUpdateGroupList,
-                EgizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
+                gizJS._getErrorCode(evt, ERROR_CODE.GIZ_SDK_HTTP_REQUEST_FAILED),
                 "onUpdateGroupList error, status:" + evt.status + ", responseText:" + evt.responseText);
         });
 };
@@ -2183,12 +2183,8 @@ GizwitsJS.prototype._connect = function(device) {
         conn = new Connection(wsInfo, this);
     }
     conn._addSubscribeDid(device.did);
-    // if (!conn._websocket || conn._websocket.readyState != conn._websocket.OPEN) {
-        conn._connectWS();
-        this._connections[wsInfo] = conn;
-    // } else {
-        // conn._subscribeDevice(device.did);
-    // }
+    conn._connectWS();
+    this._connections[wsInfo] = conn;
 }
 
 GizwitsJS.prototype._getErrorCode = function(evt, code) {
