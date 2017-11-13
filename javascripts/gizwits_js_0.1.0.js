@@ -1857,10 +1857,9 @@ Connection.prototype._onWSMessage = function(evt) {
                 this._removeSubscribeDid(failedDids[j].did);
                 this._callbackObj._sendError(this._callbackObj.onSubscribeDevice,
                     ERROR_CODE.GIZ_SDK_SUBSCRIBE_FAILED,
-                    "subscribe device failed, please try again.(Websocket error_code: "
-                    + failedDids[j].error_code + ", msg: )" + failedDids[j].msg,
+                    "subscribe device failed, please try again(Websocket error_code: "
+                    + failedDids[j].error_code + ", msg: " + failedDids[j].msg +  ").",
                     failedDids[j].did);
-                this._connectWS();
             }
             break;
         case "s2c_online_status":
@@ -2184,12 +2183,12 @@ GizwitsJS.prototype._connect = function(device) {
         conn = new Connection(wsInfo, this);
     }
     conn._addSubscribeDid(device.did);
-    if (!conn._websocket || conn._websocket.readyState != conn._websocket.OPEN) {
+    // if (!conn._websocket || conn._websocket.readyState != conn._websocket.OPEN) {
         conn._connectWS();
         this._connections[wsInfo] = conn;
-    } else {
-        conn._subscribeDevice(device.did);
-    }
+    // } else {
+        // conn._subscribeDevice(device.did);
+    // }
 }
 
 GizwitsJS.prototype._getErrorCode = function(evt, code) {
