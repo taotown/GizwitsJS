@@ -849,6 +849,14 @@ GizwitsJS.prototype._unBindDevice = function(did) {
                         delete gizJS._subDevices[did]; //删除中控子设备缓存
                     }
                 }
+                //删除订阅
+                var device = gizJS._boundDevices[key];
+                var conn = gizJS._connections[gizJS._getWebsocketConnInfo(device)];
+                if (conn && conn._subscribedDids[did]) {
+                    //断开连接
+                    conn._websocket.close();
+                    conn._removeSubscribeDid(did);
+                }
                 delete gizJS._boundDevices[did]; //删除设备缓存
                 gizJS._onDiscoverDevices(gizJS.onDiscoverDevices);
             } else {
