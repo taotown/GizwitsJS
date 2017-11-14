@@ -850,7 +850,7 @@ GizwitsJS.prototype._unBindDevice = function(did) {
                     }
                 }
                 //删除订阅
-                var device = gizJS._boundDevices[key];
+                var device = gizJS._boundDevices[did];
                 var conn = gizJS._connections[gizJS._getWebsocketConnInfo(device)];
                 if (conn && conn._subscribedDids[did]) {
                     //断开连接
